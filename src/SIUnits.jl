@@ -7,8 +7,19 @@ module SIUnits
     immutable SIUnit{m,kg,s,A,K,mol,cd} <: Number
     end 
 
+    immutable SIRange{T<:Real,m,kg,s,A,K,mol,cd} <: Ranges{T}
+        val::Range{T}
+    end
 
-    import Base: +, -, *, /, ^, promote_rule, convert, show
+
+    import Base: length, getindex, next
+
+    length(x::SIRange) = length(x.val)
+    getindex{T,m,kg,s,A,K,mol,cd}(x::SIRange{T,m,kg,s,A,K,mol,cd},i::Integer) = (show((x.val,i));SIQuantity{T,m,kg,s,A,K,mol,cd}(getindex(x.val,i)))
+    next{T,m,kg,s,A,K,mol,cd}(r::SIRange{T,m,kg,s,A,K,mol,cd},  i) = (SIQuantity{T,m,kg,s,A,K,mol,cd}(next(r.val,i)[1]),i+1)
+
+
+    import Base: +, -, *, /, //, ^, promote_rule, convert, show
 
     typealias UnitQuanity{T} SIQuantity{T,0,0,0,0,0,0,0}
 
@@ -78,24 +89,59 @@ module SIUnits
         end
     end
 
-    function /{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
-        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
-        if 0 == mT-mS == kgT-kgS == sT-sS == AT-AS == KT-KS == molT-molS == cdT-cdS
-            return x.val / y.val
-        else
-            val = x.val / y.val
-            SIQuantity{typeof(val),mT-mS,kgT-kgS,sT-sS,AT-AS,KT-KS,molT-molS,cdT-cdS}(val)
+    for op in (:/,://)
+
+        @eval function ($op){T,m,kg,s,A,K,mol,cd}(x::Number,y::SIQuantity{T,m,kg,s,A,K,mol,cd})
+            val = ($op)(x,y.val)
+            SIQuantity{typeof(val),-m,-kg,-s,-A,-K,-mol,-cd}(val)
         end
+
+        @eval function ($op){T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
+            x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
+            if 0 == mT-mS == kgT-kgS == sT-sS == AT-AS == KT-KS == molT-molS == cdT-cdS
+                return ($op)(x.val,y.val)
+            else
+                val = ($op)(x.val,y.val)
+                SIQuantity{typeof(val),mT-mS,kgT-kgS,sT-sS,AT-AS,KT-KS,molT-molS,cdT-cdS}(val)
+            end
+        end
+
+        @eval @opuu $op SIUnit{(@uc -)...}()
+        @eval @opqu $op SIQuantity{T,(@uc -)...}(x.val)
+        @eval @opuq $op SIQuantity{T,(@uc -)...}(($op)(1,y.val))
+
     end
 
+
     function +{T,S,m,kg,s,A,K,mol,cd}(
-        x::SIQuantity{T,m,kg,s,A,K,mol,cd},y::SIQuantity{S,m,kg,s,A,K,mol,cd}) 
-        SIQuantity{promote_type(T,S),m,kg,s,A,K,mol,cd}(x.val+y.val)
+        x::SIQuantity{T,m,kg,s,A,K,mol,cd},y::SIQuantity{S,m,kg,s,A,K,mol,cd})
+        val = x.val+y.val
+        SIQuantity{typeof(val),m,kg,s,A,K,mol,cd}(val)
     end
 
     function -{T,S,m,kg,s,A,K,mol,cd}(
         x::SIQuantity{T,m,kg,s,A,K,mol,cd},y::SIQuantity{S,m,kg,s,A,K,mol,cd}) 
-        SIQuantity{promote_type(T,S),m,kg,s,A,K,mol,cd}(x.val-y.val)
+        val = x.val-y.val
+        SIQuantity{typeof(val),m,kg,s,A,K,mol,cd}(val)
+    end
+
+    function -{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
+        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
+        error("Unit mismatch. Got ($(repr(unit(x)))) - ($(repr(unit(y))))")
+    end    
+
+    function +{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
+        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
+        error("Unit mismatch. Got ($(repr(unit(x)))) + ($(repr(unit(y))))")
+    end    
+
+    #function -(x::SIQuantity,y::SIQuantity)
+    #    error("Unit mismatch. Got ($(repr(unit(x)))) - ($(repr(unit(y))))")
+    #end
+
+    function -{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd})
+        val = -(x.val)
+        SIQuantity{typeof(val),m,kg,s,A,K,mol,cd}(val)
     end
 
     function ^{T,m,kg,s,A,K,mol,cd}(
@@ -118,22 +164,39 @@ module SIUnits
         convert(Int,K*r),convert(Int,mol*r),convert(Int,cd*r)}(val)
     end
 
-    import Base: sqrt
+    import Base: sqrt, abs, colon, isless, isfinite
+
+    function colon{T,S,X,m,kg,s,A,K,mol,cd}(start::SIQuantity{T,m,kg,s,A,K,mol,cd},step::SIQuantity{S,m,kg,s,A,K,mol,cd},stop::SIQuantity{X,m,kg,s,A,K,mol,cd})
+        val = colon(start.val,step.val,stop.val)
+        SIRange{eltype(val),m,kg,s,A,K,mol,cd}(val)
+    end
 
     function sqrt{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd})
         val = sqrt(x.val)
         SIQuantity{typeof(val),convert(Int,m/2),convert(Int,kg/2),convert(Int,s/2),convert(Int,A/2),
         convert(Int,K/2),convert(Int,mol/2),convert(Int,cd/2)}(val)   
     end
+
+    function abs{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd})
+        SIQuantity{T,m,kg,s,A,K,mol,cd}(abs(x.val))
+    end
+
+    function isfinite{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd})
+        isfinite(x.val)
+    end
+
+    function isless{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
+        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
+        return isless(x.val,y.val)
+    end
+
+
+
     # Arithmetic on SIUnits
 
     @opuu * SIUnit{(@uc +)...}()
     @opqu * SIQuantity{T,(@uc +)...}(x.val)
     @opuq * SIQuantity{T,(@uc +)...}(y.val)
-
-    @opuu / SIUnit{(@uc -)...}()
-    @opqu / SIQuantity{T,(@uc -)...}(x.val)
-    @opuq / SIQuantity{T,(@uc -)...}(1/y.val)
 
     function ^{m,kg,s,A,K,mol,cd}(
         x::SIUnit{m,kg,s,A,K,mol,cd},i::Integer) 
@@ -142,6 +205,7 @@ module SIUnits
 
     unit{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd}) = SIUnit{m,kg,s,A,K,mol,cd}()
 
+    const SIPrexix = SIUnit{0,0,0,0,0,0,0}()
     const Meter    = SIUnit{1,0,0,0,0,0,0}()
     const KiloGram = SIUnit{0,1,0,0,0,0,0}()
     const Second   = SIUnit{0,0,1,0,0,0,0}()
@@ -151,11 +215,21 @@ module SIUnits
     const Candela  = SIUnit{0,0,0,0,0,0,1}()
 
     const Gram       = (1//1000)KiloGram
-    const CentiMeter = (1//100)Meter
+    const Centi      = (1//100)SIPrexix
+    const Milli      = (1//1000)SIPrexix
+    const Micro      = (1//10^6)SIPrexix
+    const Nano       = (1//10^9)SIPrexix
+    const Pico       = (1//10^12)SIPrexix
+    const Femto      = (1//10^15)SIPrexix
+    const CentiMeter = Centi*Meter
 
     const Joule      = KiloGram*Meter^2/Second^2
+    const Coulomb    = Ampere*Second
+    const Volt       = Joule/Coulomb
+    const Farrad     = Coulomb^2/Joule
 
-    export Meter, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Gram, CentiMeter, Joule
+    export Meter, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Gram, CentiMeter, Joule, Centi, Pico,
+          Coulomb, Femto, Volt, Farrad, Micro, Nano, Milli
 
 # Pretty Printing - Text 
     superscript(i) = map(repr(i)) do c
@@ -173,9 +247,7 @@ module SIUnits
         error("Unexpected Chatacter")
     end
 
-    function show{T,m,kg,s,A,K,mol,cd}(io::IO,x::SIQuantity{T,m,kg,s,A,K,mol,cd})
-        show(io,x.val)
-        print(io," ")
+    function show{m,kg,s,A,K,mol,cd}(io::IO,x::SIUnit{m,kg,s,A,K,mol,cd})
         kg != 0 && print(io,"kg",(kg == 1 ? " " :superscript(kg)))
         m != 0 && print(io,"m",(m == 1 ? " " : superscript(m)))
         s != 0 && print(io,"s",(s == 1 ? " " :superscript(s)))
@@ -183,6 +255,12 @@ module SIUnits
         K != 0 && print(io,"K",(K == 1 ? " " :superscript(K)))
         mol != 0 && print(io,"mol",(mol == 1 ? " " :superscript(mol)))
         cd != 0 && print(io,"cd",(cd == 1 ? " " :uperscript(cd)))
+    end
+
+    function show{T,m,kg,s,A,K,mol,cd}(io::IO,x::SIQuantity{T,m,kg,s,A,K,mol,cd})
+        show(io,x.val)
+        print(io," ")
+        show(io,unit(x))
     end
 
 # Pretty Printing - LaTeX
