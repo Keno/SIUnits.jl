@@ -80,13 +80,12 @@ module SIUnits
     convert{T}(::Type{SIQuantity{T}},x::SIQuantity{T}) = x
     convert{T,S,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T}},x::SIQuantity{S,m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}(convert(T,x.val))
 
+    to_q{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}},val::T) = (0 == m == kg == s == A == K == mol == cd) ? val : SIQuantity{T,m,kg,s,A,K,mol,cd}(val)
+
     function *{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
         x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
-        if 0 == mT+mS == kgT+kgS == sT+sS == AT+AS == KT+KS == molT+molS == cdT+cdS
-            return x.val * y.val
-        else
-            return SIQuantity{promote_type(T,S),mT+mS,kgT+kgS,sT+sS,AT+AS,KT+KS,molT+molS,cdT+cdS}(x.val*y.val)
-        end
+        ret = x.val * y.val
+        to_q(SIQuantity{typeof(ret),(@uc +)...},ret)
     end
 
     for op in (:/,://)
@@ -98,17 +97,13 @@ module SIUnits
 
         @eval function ($op){T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
             x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
-            if 0 == mT-mS == kgT-kgS == sT-sS == AT-AS == KT-KS == molT-molS == cdT-cdS
-                return ($op)(x.val,y.val)
-            else
-                val = ($op)(x.val,y.val)
-                SIQuantity{typeof(val),mT-mS,kgT-kgS,sT-sS,AT-AS,KT-KS,molT-molS,cdT-cdS}(val)
-            end
+            ret = $(op)(x.val,y.val)
+            to_q(SIQuantity{typeof(ret),(@uc -)...},ret)
         end
 
         @eval @opuu $op SIUnit{(@uc -)...}()
-        @eval @opqu $op SIQuantity{T,(@uc -)...}(x.val)
-        @eval @opuq $op SIQuantity{T,(@uc -)...}(($op)(1,y.val))
+        @eval @opqu $op to_q(SIQuantity{T,(@uc -)...},x.val)
+        @eval @opuq $op to_q(SIQuantity{T,(@uc -)...},($op)(1,y.val))
 
     end
 
@@ -128,7 +123,7 @@ module SIUnits
     function -{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
         x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
         error("Unit mismatch. Got ($(repr(unit(x)))) - ($(repr(unit(y))))")
-    end    
+    end     
 
     function +{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
         x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
@@ -190,13 +185,11 @@ module SIUnits
         return isless(x.val,y.val)
     end
 
-
-
     # Arithmetic on SIUnits
 
     @opuu * SIUnit{(@uc +)...}()
-    @opqu * SIQuantity{T,(@uc +)...}(x.val)
-    @opuq * SIQuantity{T,(@uc +)...}(y.val)
+    @opqu * to_q(SIQuantity{T,(@uc +)...},x.val)
+    @opuq * to_q(SIQuantity{T,(@uc +)...},y.val)
 
     function ^{m,kg,s,A,K,mol,cd}(
         x::SIUnit{m,kg,s,A,K,mol,cd},i::Integer) 
@@ -205,7 +198,7 @@ module SIUnits
 
     unit{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd}) = SIUnit{m,kg,s,A,K,mol,cd}()
 
-    const SIPrexix = SIUnit{0,0,0,0,0,0,0}()
+    const SIPrefix = SIUnit{0,0,0,0,0,0,0}()
     const Meter    = SIUnit{1,0,0,0,0,0,0}()
     const KiloGram = SIUnit{0,1,0,0,0,0,0}()
     const Second   = SIUnit{0,0,1,0,0,0,0}()
@@ -214,19 +207,23 @@ module SIUnits
     const Mole     = SIUnit{0,0,0,0,0,1,0}()
     const Candela  = SIUnit{0,0,0,0,0,0,1}()
 
-    const Gram       = (1//1000)KiloGram
-    const Centi      = (1//100)SIPrexix
-    const Milli      = (1//1000)SIPrexix
-    const Micro      = (1//10^6)SIPrexix
-    const Nano       = (1//10^9)SIPrexix
-    const Pico       = (1//10^12)SIPrexix
-    const Femto      = (1//10^15)SIPrexix
+    const Kilo       = 1000SIPrefix
+    const Centi      = (1//100)SIPrefix
+    const Milli      = (1//1000)SIPrefix
+    const Micro      = (1//10^6)SIPrefix
+    const Nano       = (1//10^9)SIPrefix
+    const Pico       = (1//10^12)SIPrefix
+    const Femto      = (1//10^15)SIPrefix
     const CentiMeter = Centi*Meter
 
+    const Gram       = (1//1000)KiloGram
     const Joule      = KiloGram*Meter^2/Second^2
     const Coulomb    = Ampere*Second
     const Volt       = Joule/Coulomb
     const Farrad     = Coulomb^2/Joule
+    const Ohm        = Volt/Ampere
+    const Ω          = Ohm
+    const kΩ         = Kilo*Ohm
 
     export Meter, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Gram, CentiMeter, Joule, Centi, Pico,
           Coulomb, Femto, Volt, Farrad, Micro, Nano, Milli
