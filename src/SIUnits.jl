@@ -4,6 +4,10 @@ module SIUnits
         val::T
     end
 
+    typealias UnitQuanity{T} SIQuantity{T,0,0,0,0,0,0,0}
+
+    SIQuantity{T<:Number}(x::T) = UnitQuanity{T}(x)
+
     immutable SIUnit{m,kg,s,A,K,mol,cd} <: Number
     end 
 
@@ -19,9 +23,7 @@ module SIUnits
     next{T,m,kg,s,A,K,mol,cd}(r::SIRange{T,m,kg,s,A,K,mol,cd},  i) = (SIQuantity{T,m,kg,s,A,K,mol,cd}(next(r.val,i)[1]),i+1)
 
 
-    import Base: +, -, *, /, //, ^, promote_rule, convert, show
-
-    typealias UnitQuanity{T} SIQuantity{T,0,0,0,0,0,0,0}
+    import Base: +, -, *, /, //, ^, promote_rule, convert, show, ==
 
     macro uc(op...)
         if length(op) == 0
@@ -81,6 +83,13 @@ module SIUnits
     convert{T,S,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T}},x::SIQuantity{S,m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}(convert(T,x.val))
 
     to_q{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}},val::T) = (0 == m == kg == s == A == K == mol == cd) ? val : SIQuantity{T,m,kg,s,A,K,mol,cd}(val)
+    convert{T,S,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}},val::S) = (SIQuantity{T,m,kg,s,A,K,mol,cd}(convert(T,val)))
+    function convert{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(::Type{SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT}},val::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS})
+        if mS != mT || kgS != kgT || sS != sT || AS != AT || KS != KT || molS != molT || cdS != cdT
+            error("Dimension mismatch in convert. Attempted to convert a ($(repr(SIUnit{mS,kgS,sS,AS,KS,molS,cdS}))) to ($(repr(SIUnit{mT,kgT,sT,AT,KT,molT,cdT})))")
+        end
+        SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT}(convert(T,val.val))
+    end
 
     function *{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
         x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
@@ -159,6 +168,11 @@ module SIUnits
         convert(Int,K*r),convert(Int,mol*r),convert(Int,cd*r)}(val)
     end
 
+    function =={T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
+        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS})
+        return (mT == mS && kgT == kgS && sT == sS && AT == AS && molT == molS && cdT == cdS) && (x.val == y.val)
+    end
+
     import Base: sqrt, abs, colon, isless, isfinite
 
     function colon{T,S,X,m,kg,s,A,K,mol,cd}(start::SIQuantity{T,m,kg,s,A,K,mol,cd},step::SIQuantity{S,m,kg,s,A,K,mol,cd},stop::SIQuantity{X,m,kg,s,A,K,mol,cd})
@@ -208,6 +222,7 @@ module SIUnits
     const Candela  = SIUnit{0,0,0,0,0,0,1}()
 
     const Kilo       = 1000SIPrefix
+    const Mega       = 10^6SIPrefix
     const Centi      = (1//100)SIPrefix
     const Milli      = (1//1000)SIPrefix
     const Micro      = (1//10^6)SIPrefix
@@ -221,9 +236,11 @@ module SIUnits
     const Coulomb    = Ampere*Second
     const Volt       = Joule/Coulomb
     const Farrad     = Coulomb^2/Joule
+    const µF         = Micro*Farrad
     const Ohm        = Volt/Ampere
     const Ω          = Ohm
     const kΩ         = Kilo*Ohm
+    const MΩ         = Mega*Ohm
 
     export Meter, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Gram, CentiMeter, Joule, Centi, Pico,
           Coulomb, Femto, Volt, Farrad, Micro, Nano, Milli
@@ -258,6 +275,20 @@ module SIUnits
         show(io,x.val)
         print(io," ")
         show(io,unit(x))
+    end
+
+    function sidims{m,kg,s,A,K,mol,cd}(::SIUnit{m,kg,s,A,K,mol,cd})
+        (m,kg,s,A,K,mol,cd)
+    end
+
+    export @prettyshow
+
+    macro prettyshow(unit,string)
+        esc(quote function Base.show{T}(io::IO,x::SIUnits.SIQuantity{T,SIUnits.sidims($(unit))...})
+            show(io,x.val)
+            print(io," ")
+            print(io,$(string))
+        end end) 
     end
 
 # Pretty Printing - LaTeX
