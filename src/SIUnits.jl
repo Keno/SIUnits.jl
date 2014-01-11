@@ -16,7 +16,7 @@ module SIUnits
     end
 
 
-    import Base: length, getindex, next, float64, float
+    import Base: length, getindex, next, float64, float, int
 
     length(x::SIRange) = length(x.val)
     getindex{T,m,kg,s,A,K,mol,cd}(x::SIRange{T,m,kg,s,A,K,mol,cd},i::Integer) = (show((x.val,i));SIQuantity{T,m,kg,s,A,K,mol,cd}(getindex(x.val,i)))
@@ -211,6 +211,7 @@ module SIUnits
 
     float64(x::SIQuantity) = float64(x.val)
     float(x::SIQuantity) = float(x.val)
+    int(x::SIQuantity) = int(x.val)
 
     # Arithmetic on SIUnits
 
