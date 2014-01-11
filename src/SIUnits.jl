@@ -16,7 +16,7 @@ module SIUnits
     end
 
 
-    import Base: length, getindex, next
+    import Base: length, getindex, next, float64, float
 
     length(x::SIRange) = length(x.val)
     getindex{T,m,kg,s,A,K,mol,cd}(x::SIRange{T,m,kg,s,A,K,mol,cd},i::Integer) = (show((x.val,i));SIQuantity{T,m,kg,s,A,K,mol,cd}(getindex(x.val,i)))
@@ -199,6 +199,9 @@ module SIUnits
         return isless(x.val,y.val)
     end
 
+    float64(x::SIQuantity) = float64(x.val)
+    float(x::SIQuantity) = float(x.val)
+
     # Arithmetic on SIUnits
 
     @opuu * SIUnit{(@uc +)...}()
@@ -243,7 +246,7 @@ module SIUnits
     const MΩ         = Mega*Ohm
 
     export Meter, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Gram, CentiMeter, Joule, Centi, Pico,
-          Coulomb, Femto, Volt, Farrad, Micro, Nano, Milli
+          Coulomb, Femto, Volt, Farrad, Micro, Nano, Milli, Mega
 
 # Pretty Printing - Text 
     superscript(i) = map(repr(i)) do c
@@ -281,14 +284,20 @@ module SIUnits
         (m,kg,s,A,K,mol,cd)
     end
 
+    function sidims{T,m,kg,s,A,K,mol,cd}(::SIQuantity{T,m,kg,s,A,K,mol,cd})
+        (m,kg,s,A,K,mol,cd)
+    end
+
     export @prettyshow
 
     macro prettyshow(unit,string)
-        esc(quote function Base.show{T}(io::IO,x::SIUnits.SIQuantity{T,SIUnits.sidims($(unit))...})
-            show(io,x.val)
-            print(io," ")
+        esc(quote function Base.show(io::IO,::SIUnits.SIUnit{SIUnits.sidims($(unit))...})
             print(io,$(string))
-        end end) 
+        end
+        function Base.Multimedia.writemime(io::IO,::MIME"text/mathtex+latex",::SIUnits.SIUnit{SIUnits.sidims($(unit))...})
+            Base.Multimedia.writemime(io,MIME("text/mathtex+latex"),$(string))
+        end
+        end) 
     end
 
 # Pretty Printing - LaTeX
