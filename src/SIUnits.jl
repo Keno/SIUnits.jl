@@ -173,6 +173,16 @@ module SIUnits
         return (mT == mS && kgT == kgS && sT == sS && AT == AS && molT == molS && cdT == cdS) && (x.val == y.val)
     end
 
+    function =={T,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
+        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIUnit{mS,kgS,sS,AS,KS,molS,cdS})
+        return (mT == mS && kgT == kgS && sT == sS && AT == AS && molT == molS && cdT == cdS) && (x.val == one(T))
+    end
+
+    function =={S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
+        x::SIUnit{mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS})
+        return (mT == mS && kgT == kgS && sT == sS && AT == AS && molT == molS && cdT == cdS) && (one(S) == y.val)
+    end
+
     import Base: sqrt, abs, colon, isless, isfinite
 
     function colon{T,S,X,m,kg,s,A,K,mol,cd}(start::SIQuantity{T,m,kg,s,A,K,mol,cd},step::SIQuantity{S,m,kg,s,A,K,mol,cd},stop::SIQuantity{X,m,kg,s,A,K,mol,cd})
@@ -215,6 +225,10 @@ module SIUnits
 
     unit{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd}) = SIUnit{m,kg,s,A,K,mol,cd}()
 
+    export SIPrefix, Meter, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Kilo, Mega, Giga,
+        Tera, Centi, Milli, Micro, Nano, Pico, Femto, Gram, Joule, Coulomb, Volt, Farad, Newton,
+        Ohm, CentiMeter, Siemens, Hertz
+
     const SIPrefix = SIUnit{0,0,0,0,0,0,0}()
     const Meter    = SIUnit{1,0,0,0,0,0,0}()
     const KiloGram = SIUnit{0,1,0,0,0,0,0}()
@@ -226,27 +240,27 @@ module SIUnits
 
     const Kilo       = 1000SIPrefix
     const Mega       = 10^6SIPrefix
+    const Giga       = 10^9SIPrefix
+    const Tera      = 10^12SIPrefix
     const Centi      = (1//100)SIPrefix
     const Milli      = (1//1000)SIPrefix
     const Micro      = (1//10^6)SIPrefix
     const Nano       = (1//10^9)SIPrefix
     const Pico       = (1//10^12)SIPrefix
     const Femto      = (1//10^15)SIPrefix
-    const CentiMeter = Centi*Meter
 
     const Gram       = (1//1000)KiloGram
     const Joule      = KiloGram*Meter^2/Second^2
     const Coulomb    = Ampere*Second
     const Volt       = Joule/Coulomb
-    const Farrad     = Coulomb^2/Joule
-    const µF         = Micro*Farrad
+    const Farad      = Coulomb^2/Joule
+    const Newton     = KiloGram*Meter/Second^2
     const Ohm        = Volt/Ampere
-    const Ω          = Ohm
-    const kΩ         = Kilo*Ohm
-    const MΩ         = Mega*Ohm
+    const Hertz      = 1/Second
+    const Siemens    = 1/Ohm
 
-    export Meter, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Gram, CentiMeter, Joule, Centi, Pico,
-          Coulomb, Femto, Volt, Farrad, Micro, Nano, Milli, Mega
+    const CentiMeter = Centi*Meter
+
 
 # Pretty Printing - Text 
     superscript(i) = map(repr(i)) do c
@@ -381,5 +395,7 @@ function as{U<:NonSIUnit}(x::SIQuantity,y::U)
     @assert !(typeof(val)<:SIQuantity)
     NonSIQuantity{typeof(val),U}(val)
 end
+
+include("shortunits.jl")
 
 end # module
