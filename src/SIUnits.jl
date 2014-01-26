@@ -11,17 +11,47 @@ module SIUnits
     immutable SIUnit{m,kg,s,A,K,mol,cd} <: Number
     end 
 
-    immutable SIRange{T<:Real,m,kg,s,A,K,mol,cd} <: Ranges{T}
+    abstract SIRanges{T<:Real,m,kg,s,A,K,mol,cd} <: Ranges{T}
+
+    immutable SIRange{T<:Real,m,kg,s,A,K,mol,cd} <: SIRanges{T,m,kg,s,A,K,mol,cd}
         val::Range{T}
     end
 
+    immutable SIRange1{T<:Real,m,kg,s,A,K,mol,cd} <: SIRanges{T,m,kg,s,A,K,mol,cd}
+        val::Range1{T}
+    end
 
-    import Base: length, getindex, next, float64, float, int
+    unit{T,m,kg,s,A,K,mol,cd}(x::SIRanges{T,m,kg,s,A,K,mol,cd}) = SIUnit{m,kg,s,A,K,mol,cd}()
+    quantity{T,m,kg,s,A,K,mol,cd}(x::SIRanges{T,m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}
 
-    length(x::SIRange) = length(x.val)
-    getindex{T,m,kg,s,A,K,mol,cd}(x::SIRange{T,m,kg,s,A,K,mol,cd},i::Integer) = (show((x.val,i));SIQuantity{T,m,kg,s,A,K,mol,cd}(getindex(x.val,i)))
-    next{T,m,kg,s,A,K,mol,cd}(r::SIRange{T,m,kg,s,A,K,mol,cd},  i) = (SIQuantity{T,m,kg,s,A,K,mol,cd}(next(r.val,i)[1]),i+1)
+    import Base: length, getindex, next, float64, float, int, show, start, step, last, done, first, eltype
 
+    # This is all nessecary because SIQuanity{T<:Real} !<: Real
+    show(io::IO, x::SIRanges) = (show(io, x.val); show(io,unit(x)))
+    function show(io::IO, r::SIRange)
+        if step(r) == zero(quantity(r))
+            print(io, "SIRange(",start(r),",",step(r),",",length(r),")")
+        else
+            print(io, start(r),':',step(r),':',last(r))
+        end
+    end
+    show(io::IO, r::SIRange1) = print(io, first(r),':',last(r))
+    getindex(r::SIRanges,i::Integer) = (quantity(r)(getindex(x.val,i)))
+    function next(r::SIRanges, i) 
+        v, j = next(r.val,i)
+        quantity(r)(v), j
+    end
+    length(r::SIRanges) = length(r.val)
+    start(r::SIRanges) = start(r.val)
+    done(r::SIRanges,i) = done(r.val,i)
+    eltype(r::SIRanges) = quantity(r)
+
+    for func in (:first,:step,:last)
+        @eval $(func)(r::SIRanges) = quantity(r)($(func)(r.val))
+    end
+
+    tup2u(tup) = SIUnit{tup[1],tup[2],tup[3],tup[4],tup[5],tup[6],tup[7]}
+    -(tup::(Int64,Int64,Int64,Int64,Int64,Int64,Int64)) = (-tup[1],-tup[2],-tup[3],-tup[4],-tup[5],-tup[6],-tup[7])
 
     import Base: +, -, *, /, //, ^, promote_rule, convert, show, ==
 
@@ -38,8 +68,18 @@ module SIUnits
         esc(:((mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT)))
     end
 
-    macro uc1()
-        esc(:(m,kg,s,A,K,mol,cd))
+    macro uc1(op...)
+        if length(op) == 0
+            esc(:((m,kg,s,A,K,mol,cd)...))
+        else
+            @assert length(op) == 1
+            op = op[1]
+            esc(:($(op)(m),$(op)(kg),$(op)(s),$(op)(A),$(op)(K),$(op)(mol),$(op)(cd)))
+        end
+    end
+
+    macro op1(name)
+        esc(:( $(name){m,kg,s,A,K,mol,cd} ))
     end
 
     macro opqu(op,body)
@@ -117,6 +157,8 @@ module SIUnits
         to_q(SIQuantity{typeof(ret),(@uc +)...},ret)
     end
 
+    const u1 = :(SIUnit{m,kg,s,A,K,mol,cd})
+
     for op in (:/,://)
 
         @eval function ($op){T,m,kg,s,A,K,mol,cd}(x::Number,y::SIQuantity{T,m,kg,s,A,K,mol,cd})
@@ -134,8 +176,10 @@ module SIUnits
         @eval @opqu $op to_q(SIQuantity{T,(@uc -)...},x.val)
         @eval @opuq $op to_q(SIQuantity{T,(@uc -)...},($op)(1,y.val))
 
+        @eval $(op)(x::Number,y::SIUnit) = x*tup2u(-tup(y))()
     end
 
+    inv(y::SIUnit) = tup2u(-tup(y))()
 
     function +{T,S,m,kg,s,A,K,mol,cd}(
         x::SIQuantity{T,m,kg,s,A,K,mol,cd},y::SIQuantity{S,m,kg,s,A,K,mol,cd})
@@ -210,6 +254,11 @@ module SIUnits
         SIRange{eltype(val),m,kg,s,A,K,mol,cd}(val)
     end
 
+    function colon{T,S,m,kg,s,A,K,mol,cd}(start::SIQuantity{T,m,kg,s,A,K,mol,cd},stop::SIQuantity{S,m,kg,s,A,K,mol,cd})
+        val = colon(start.val,stop.val)
+        SIRange1{eltype(val),m,kg,s,A,K,mol,cd}(val)
+    end
+
     function sqrt{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd})
         val = sqrt(x.val)
         SIQuantity{typeof(val),convert(Int,m/2),convert(Int,kg/2),convert(Int,s/2),convert(Int,A/2),
@@ -277,8 +326,8 @@ module SIUnits
     const Farad      = Coulomb^2/Joule
     const Newton     = KiloGram*Meter/Second^2
     const Ohm        = Volt/Ampere
-    const Hertz      = 1/Second
-    const Siemens    = 1/Ohm
+    const Hertz      = inv(Second)
+    const Siemens    = inv(Ohm)
 
     const CentiMeter = Centi*Meter
 
