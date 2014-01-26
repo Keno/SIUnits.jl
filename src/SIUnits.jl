@@ -39,7 +39,7 @@ module SIUnits
     getindex(r::SIRanges,i::Integer) = (quantity(r)(getindex(x.val,i)))
     function next(r::SIRanges, i) 
         v, j = next(r.val,i)
-        quantity(r)(v), j
+        to_q(quantity(r),v), j
     end
     length(r::SIRanges) = length(r.val)
     start(r::SIRanges) = start(r.val)
@@ -47,64 +47,23 @@ module SIUnits
     eltype(r::SIRanges) = quantity(r)
 
     for func in (:first,:step,:last)
-        @eval $(func)(r::SIRanges) = quantity(r)($(func)(r.val))
+        @eval $(func)(r::SIRanges) = to_q(quantity(r),$(func)(r.val))
     end
+
+    typealias UnitTuple NTuple{7,Int64}
 
     tup2u(tup) = SIUnit{tup[1],tup[2],tup[3],tup[4],tup[5],tup[6],tup[7]}
-    -(tup::(Int64,Int64,Int64,Int64,Int64,Int64,Int64)) = (-tup[1],-tup[2],-tup[3],-tup[4],-tup[5],-tup[6],-tup[7])
+    quantity(T::Type,tup::UnitTuple) = quantity(T,tup2u(tup)())
+    -(tup::UnitTuple) = (-tup[1],-tup[2],-tup[3],-tup[4],-tup[5],-tup[6],-tup[7])
+
+    for op in (:-,:*,:+)
+        @eval function $(op)(tup1::UnitTuple,tup2::UnitTuple)
+            ($(op)(tup1[1],tup2[1]),$(op)(tup1[2],tup2[2]),$(op)(tup1[3],tup2[3]),$(op)(tup1[4],tup2[4]),$(op)(tup1[5],tup2[5]),
+                $(op)(tup1[6],tup2[6]),$(op)(tup1[7],tup2[7]))
+        end
+    end
 
     import Base: +, -, *, /, //, ^, promote_rule, convert, show, ==
-
-    macro uc(op...)
-        if length(op) == 0
-            esc(:((m,kg,s,A,K,mol,cd)...))
-        elseif length(op) == 1
-            op = op[1]
-            esc(:((($op)(mT,mS),($op)(kgT,kgS),($op)(sT,sS),($op)(AT,AS),($op)(KT,KS),($op)(molT,molS),($op)(cdT,cdS))))
-        end
-    end
-
-    macro uc2()
-        esc(:((mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT)))
-    end
-
-    macro uc1(op...)
-        if length(op) == 0
-            esc(:((m,kg,s,A,K,mol,cd)...))
-        else
-            @assert length(op) == 1
-            op = op[1]
-            esc(:($(op)(m),$(op)(kg),$(op)(s),$(op)(A),$(op)(K),$(op)(mol),$(op)(cd)))
-        end
-    end
-
-    macro op1(name)
-        esc(:( $(name){m,kg,s,A,K,mol,cd} ))
-    end
-
-    macro opqu(op,body)
-        esc(quote
-            function $(op){T,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIUnit{mS,kgS,sS,AS,KS,molS,cdS})
-                $body
-            end
-        end)
-    end
-
-    macro opuq(op,body)
-        esc(quote
-            function $(op){S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(x::SIUnit{mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS})
-                $body
-            end
-        end)
-    end
-
-    macro opuu(op,body)
-        esc(quote
-            function $(op){mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(x::SIUnits.SIUnit{mT,kgT,sT,AT,KT,molT,cdT},y::SIUnits.SIUnit{mS,kgS,sS,AS,KS,molS,cdS})
-                $body
-            end
-        end)
-    end
 
     export quantity, @quantity
 
@@ -115,6 +74,7 @@ module SIUnits
     quantity{m,kg,s,A,K,mol,cd}(T::Union(Type,TypeVar),unit::SIUnit{m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}
 
     tup{m,kg,s,A,K,mol,cd}(u::SIUnit{m,kg,s,A,K,mol,cd}) = (m,kg,s,A,K,mol,cd)
+    tup{T,m,kg,s,A,K,mol,cd}(u::SIQuantity{T,m,kg,s,A,K,mol,cd}) = (m,kg,s,A,K,mol,cd)
 
     macro quantity(expr,unit)
         esc(:(SIUnits.SIQuantity{$expr,SIUnits.tup($unit)...}))
@@ -151,30 +111,21 @@ module SIUnits
         SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT}(convert(T,val.val))
     end
 
-    function *{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
-        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
-        ret = x.val * y.val
-        to_q(SIQuantity{typeof(ret),(@uc +)...},ret)
-    end
-
-    const u1 = :(SIUnit{m,kg,s,A,K,mol,cd})
-
     for op in (:/,://)
 
-        @eval function ($op){T,m,kg,s,A,K,mol,cd}(x::Number,y::SIQuantity{T,m,kg,s,A,K,mol,cd})
+        @eval function ($op){T}(x::Number,y::SIQuantity{T})
             val = ($op)(x,y.val)
-            SIQuantity{typeof(val),-m,-kg,-s,-A,-K,-mol,-cd}(val)
+            to_q(quantity(typeof(val),-tup(y)),val)
         end
 
-        @eval function ($op){T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
-            x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
-            ret = $(op)(x.val,y.val)
-            to_q(SIQuantity{typeof(ret),(@uc -)...},ret)
+        @eval function ($op)(x::SIQuantity,y::SIQuantity)
+            val = $(op)(x.val,y.val)
+            to_q(quantity(typeof(val),tup(x)-tup(y)),val)
         end
 
-        @eval @opuu $op SIUnit{(@uc -)...}()
-        @eval @opqu $op to_q(SIQuantity{T,(@uc -)...},x.val)
-        @eval @opuq $op to_q(SIQuantity{T,(@uc -)...},($op)(1,y.val))
+        @eval $(op)(x::SIUnit,y::SIUnit) = tup2u(tup(x)-tup(y))()
+        @eval $(op){T}(x::SIQuantity{T},y::SIUnit) = to_q(quantity(T,tup(unit(x))-tup(y)),x.val)
+        @eval $(op){T}(x::SIUnit,y::SIQuantity{T}) = to_q(quantity(T,tup(x)-tup(unit(y))),($op)(1,y.val))
 
         @eval $(op)(x::Number,y::SIUnit) = x*tup2u(-tup(y))()
     end
@@ -201,11 +152,7 @@ module SIUnits
     function +{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
         x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
         error("Unit mismatch. Got ($(repr(unit(x)))) + ($(repr(unit(y))))")
-    end    
-
-    #function -(x::SIQuantity,y::SIQuantity)
-    #    error("Unit mismatch. Got ($(repr(unit(x)))) - ($(repr(unit(y))))")
-    #end
+    end
 
     function -{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd})
         val = -(x.val)
@@ -232,20 +179,9 @@ module SIUnits
         convert(Int,K*r),convert(Int,mol*r),convert(Int,cd*r)}(val)
     end
 
-    function =={T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
-        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS})
-        return (mT == mS && kgT == kgS && sT == sS && AT == AS && molT == molS && cdT == cdS) && (x.val == y.val)
-    end
-
-    function =={T,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
-        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIUnit{mS,kgS,sS,AS,KS,molS,cdS})
-        return (mT == mS && kgT == kgS && sT == sS && AT == AS && molT == molS && cdT == cdS) && (x.val == one(T))
-    end
-
-    function =={S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
-        x::SIUnit{mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS})
-        return (mT == mS && kgT == kgS && sT == sS && AT == AS && molT == molS && cdT == cdS) && (one(S) == y.val)
-    end
+    ==(x::SIQuantity,y::SIQuantity) = (tup(x) == tup(y)) && (x.val == y.val)
+    =={T}(x::SIQuantity{T},y::SIUnit) = (tup(x) == tup(y)) && (x.val == one(T))
+    =={T}(x::SIUnit,y::SIQuantity{T}) = (tup(x) == tup(y)) && (one(T) == y.val)
 
     import Base: sqrt, abs, colon, isless, isfinite
 
@@ -282,11 +218,14 @@ module SIUnits
     float(x::SIQuantity) = float(x.val)
     int(x::SIQuantity) = int(x.val)
 
-    # Arithmetic on SIUnits
+    *(x::SIUnit,y::SIUnit) = tup2u(tup(x)+tup(y))()
+    *{T}(x::SIUnit,y::SIQuantity{T}) = to_q(quantity(T,tup(y)+tup(x)),y.val)
+    *{T}(x::SIQuantity{T},y::SIUnit) = to_q(quantity(T,tup(y)+tup(x)),x.val)
+    function *(x::SIQuantity,y::SIQuantity) 
+        ret = x.val * y.val
+        to_q(quantity(typeof(ret),tup(x)+tup(y)),ret)
+    end
 
-    @opuu * SIUnit{(@uc +)...}()
-    @opqu * to_q(SIQuantity{T,(@uc +)...},x.val)
-    @opuq * to_q(SIQuantity{T,(@uc +)...},y.val)
 
     function ^{m,kg,s,A,K,mol,cd}(
         x::SIUnit{m,kg,s,A,K,mol,cd},i::Integer) 
@@ -308,10 +247,10 @@ module SIUnits
     const Mole     = SIUnit{0,0,0,0,0,1,0}()
     const Candela  = SIUnit{0,0,0,0,0,0,1}()
 
-    const Kilo       = 1000SIPrefix
-    const Mega       = 10^6SIPrefix
-    const Giga       = 10^9SIPrefix
-    const Tera      = 10^12SIPrefix
+    const Kilo       = (1000)SIPrefix
+    const Mega       = (10^6)SIPrefix
+    const Giga       = (10^9)SIPrefix
+    const Tera       = (10^12)SIPrefix
     const Centi      = (1//100)SIPrefix
     const Milli      = (1//1000)SIPrefix
     const Micro      = (1//10^6)SIPrefix

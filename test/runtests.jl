@@ -23,6 +23,9 @@ OneNewton = 1*(kg*m/s^2)
 
 @test 1/s == 1Hz
 
+@test 1Hz*1s == 1
+@test 1s/(1s) == 1
+
 # Issue #2
 
 immutable note{T<:Real}
