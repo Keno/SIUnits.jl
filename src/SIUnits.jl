@@ -66,6 +66,20 @@ module SIUnits
         end)
     end
 
+    export quantity, @quantity
+
+    function quantity{S}(T,quant::SIQuantity{S}) 
+        quant.val == one(S) || error("Quantity value must be unity!")
+        quantity(T,unit(quant))
+    end
+    quantity{m,kg,s,A,K,mol,cd}(T::Union(Type,TypeVar),unit::SIUnit{m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}
+
+    tup{m,kg,s,A,K,mol,cd}(u::SIUnit{m,kg,s,A,K,mol,cd}) = (m,kg,s,A,K,mol,cd)
+
+    macro quantity(expr,unit)
+        esc(:(SIUnits.SIQuantity{$expr,SIUnits.tup($unit)...}))
+    end
+
     # MathConsts propagate through units. Fancy!!
     promote_rule{sym,m,kg,s,A,K,mol,cd}(x::Type{MathConst{sym}},y::Type{SIUnit{m,kg,s,A,K,mol,cd}}) = 
         SIQuantity{MathConst{s},m,kg,s,A,K,mol,cd}

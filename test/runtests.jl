@@ -22,3 +22,17 @@ OneNewton = 1*(kg*m/s^2)
 @test_throws sqrt(1s)
 
 @test 1/s == 1Hz
+
+# Issue #2
+
+immutable note{T<:Real}
+    pitch::quantity(T,Hz)     #has dimensions of inverse time
+    duration::quantity(T,s) #has dimensions of time
+    sustained::Bool
+end
+
+note{Float64}(1.0Hz,1s,true)
+
+@test_throws immutable foo{T}
+    bar::quantity(T,2s)
+end
