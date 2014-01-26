@@ -4,9 +4,9 @@ module SIUnits
         val::T
     end
 
-    typealias UnitQuanity{T} SIQuantity{T,0,0,0,0,0,0,0}
+    typealias UnitQuantity{T} SIQuantity{T,0,0,0,0,0,0,0}
 
-    SIQuantity{T<:Number}(x::T) = UnitQuanity{T}(x)
+    SIQuantity{T<:Number}(x::T) = UnitQuantity{T}(x)
 
     immutable SIUnit{m,kg,s,A,K,mol,cd} <: Number
     end 
@@ -77,7 +77,7 @@ module SIUnits
     promote_rule{T,S<:Number,m,kg,s,A,K,mol,cd}(x::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}},y::Type{S}) = SIQuantity{promote_type(T,S)}
 
     convert{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T}},x::SIUnit{m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}(one(T))
-    convert{T}(::Type{SIQuantity{T}},x::T) = UnitQuanity{T}(x)
+    convert{T}(::Type{SIQuantity{T}},x::T) = UnitQuantity{T}(x)
     convert{T,S}(::Type{SIQuantity{T}},x::S) = convert(SIQuantity{T},convert(T,x))
     convert{T}(::Type{SIQuantity{T}},x::SIQuantity{T}) = x
     convert{T,S,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T}},x::SIQuantity{S,m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}(convert(T,x.val))
