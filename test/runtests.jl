@@ -34,7 +34,7 @@ immutable note{T<:Real}
     sustained::Bool
 end
 
-note{Float64}(1.0Hz,1s,true)
+note{Float64}(1.0Hz,1.0s,true)
 
 @test_throws immutable foo{T}
     bar::quantity(T,2s)
