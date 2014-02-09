@@ -44,5 +44,8 @@ end
 r1 = 1Hz:5Hz
 @test length(r1) == 5
 
-
 @test collect(1Hz:5Hz) == collect(1:5)Hz # Tests the iteration protocol
+
+# Others
+
+@test mod(2µm,4µm) == 2µm

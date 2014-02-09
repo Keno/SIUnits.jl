@@ -63,7 +63,7 @@ module SIUnits
         end
     end
 
-    import Base: +, -, *, /, //, ^, promote_rule, convert, show, ==
+    import Base: +, -, *, /, //, ^, promote_rule, convert, show, ==, mod
 
     export quantity, @quantity
 
@@ -212,6 +212,16 @@ module SIUnits
     function isless{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
         x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
         return isless(x.val,y.val)
+    end
+
+    function mod{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
+        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
+        error("Unit mismatch. Got mod($(repr(unit(x))),$(repr(unit(y))))")
+    end
+    
+    function mod{T,S,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd},y::SIQuantity{S,m,kg,s,A,K,mol,cd})
+        val = mod(x.val,y.val)
+        SIQuantity{typeof(val),m,kg,s,A,K,mol,cd}(val)
     end
 
     float64(x::SIQuantity) = float64(x.val)
