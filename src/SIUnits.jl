@@ -236,7 +236,7 @@ module SIUnits
 
     export SIPrefix, Meter, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Kilo, Mega, Giga,
         Tera, Centi, Milli, Micro, Nano, Pico, Femto, Gram, Joule, Coulomb, Volt, Farad, Newton,
-        Ohm, CentiMeter, Siemens, Hertz
+        Ohm, CentiMeter, Siemens, Hertz, Watt
 
     const SIPrefix = SIUnit{0,0,0,0,0,0,0}()
     const Meter    = SIUnit{1,0,0,0,0,0,0}()
@@ -267,6 +267,7 @@ module SIUnits
     const Ohm        = Volt/Ampere
     const Hertz      = inv(Second)
     const Siemens    = inv(Ohm)
+    const Watt       = Joule/Second
 
     const CentiMeter = Centi*Meter
 

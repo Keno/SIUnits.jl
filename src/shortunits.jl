@@ -5,7 +5,7 @@
 module ShortUnits
     export µg, mg, g, kg, µm, mm, cm, m, km, mJ, J, MJ, HJ, fF, pF, nF, µF, mF,
         F, pΩ, nΩ, µΩ, mΩ, Ω, kΩ, MΩ, mV, V, MV, mHz, Hz, MHz, GHz, THz, fA, pA, 
-        nA, µA, mA, A, C, N, mol, ns, ms, µs, s, S
+        nA, µA, mA, A, C, N, mol, ns, ms, µs, s, S, nW, µW, mW, W, MW, GW
 
     using SIUnits
 
@@ -67,6 +67,13 @@ module ShortUnits
     const C     = Coulomb
 
     const N     = Newton
+
+    const nW    = Nano*Watt
+    const µW    = Micro*Watt
+    const mW    = Milli*Watt
+    const W     = Watt
+    const MW    = Mega*Watt
+    const GW    = Giga*Watt
 
     const mol   = Mole
 end
