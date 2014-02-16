@@ -245,8 +245,8 @@ module SIUnits
     unit{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd}) = SIUnit{m,kg,s,A,K,mol,cd}()
 
     export SIPrefix, Meter, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Kilo, Mega, Giga,
-        Tera, Centi, Milli, Micro, Nano, Pico, Femto, Gram, Joule, Coulomb, Volt, Farad, Newton,
-        Ohm, CentiMeter, Siemens, Hertz, Watt
+        Tera, Peta, Exa, Zetta, Centi, Milli, Micro, Nano, Pico, Femto, Atto, Zepto, Yocto,
+        Gram, Joule, Coulomb, Volt, Farad, Newton, Ohm, CentiMeter, Siemens, Hertz, Watt
 
     const SIPrefix = SIUnit{0,0,0,0,0,0,0}()
     const Meter    = SIUnit{1,0,0,0,0,0,0}()
@@ -261,12 +261,19 @@ module SIUnits
     const Mega       = (10^6)SIPrefix
     const Giga       = (10^9)SIPrefix
     const Tera       = (10^12)SIPrefix
+    const Peta       = (10^15)SIPrefix
+    const Exa        = (10^18)SIPrefix
+    const Zetta      = (10^21)SIPrefix
+    const Yotta      = (10^24)SIPrefix
     const Centi      = (1//100)SIPrefix
     const Milli      = (1//1000)SIPrefix
     const Micro      = (1//10^6)SIPrefix
     const Nano       = (1//10^9)SIPrefix
     const Pico       = (1//10^12)SIPrefix
     const Femto      = (1//10^15)SIPrefix
+    const Atto       = (1//10^18)SIPrefix
+    const Zepto      = (1//10^21)SIPrefix
+    const Yocto      = (1//10^24)SIPrefix
 
     const Gram       = (1//1000)KiloGram
     const Joule      = KiloGram*Meter^2/Second^2
@@ -413,6 +420,12 @@ convert(::Type{SIQuantity},::typeof(ElectronVolt)) = 1.60217656535e-19Joule
 function as{U<:NonSIUnit}(x::SIQuantity,y::U)
     val = x/y
     @assert !(typeof(val)<:SIQuantity)
+    NonSIQuantity{typeof(val),U}(val)
+end
+
+function as{U<:NonSIUnit,Q<:SIQuantity}(X::AbstractArray{Q},y::U)
+    val = [x/y for x in X]
+    @assert !(typeof(eltype(val))<:SIQuantity)
     NonSIQuantity{typeof(val),U}(val)
 end
 
