@@ -94,7 +94,6 @@ module SIUnits
     promote_rule{m,kg,s,A,K,mol,cd}(x::Type{Bool},y::Type{SIUnit{m,kg,s,A,K,mol,cd}}) = SIQuantity{Bool}
     promote_rule{T,S,m,kg,s,A,K,mol,cd}(x::Type{T},y::Type{SIQuantity{S,m,kg,s,A,K,mol,cd}}) = SIQuantity{promote_type(T,S)}
     promote_rule{T,m,kg,s,A,K,mol,cd}(x::Type{T},y::Type{SIUnit{m,kg,s,A,K,mol,cd}}) = SIQuantity{T}
-    promote_rule{T,S<:Number,m,kg,s,A,K,mol,cd}(x::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}},y::Type{S}) = SIQuantity{promote_type(T,S)}
 
     convert{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T}},x::SIUnit{m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}(one(T))
     convert{T}(::Type{SIQuantity{T}},x::T) = UnitQuantity{T}(x)
@@ -386,7 +385,37 @@ immutable NonSIQuantity{T,Unit<:NonSIUnit} <: Number
     val::T
 end
 
+# Non-SI promote rules
+promote_rule(x::Type{MathConst},y::Type{NonSIUnit}) = 
+    NonSIQuantity{x,y}
+promote_rule{sym,T,Unit}(x::Type{MathConst{sym}},y::Type{NonSIQuantity{T,Unit}}) = 
+    NonSIQuantity{promote_type(MathConst{sym},T),Unit}
+
+promote_rule{T,S,U1,U2}(
+    A::Type{NonSIQuantity{T,U1}},B::Type{SIQuantity{S,U2}}) = NonSIQuantity{promote_type(T,S)}
+promote_rule{T,U1}(
+    A::Type{NonSIQuantity{T,U1}},U2::Type{NonSIUnit}) = NonSIQuantity{T}
+promote_rule{S,U}(x::Type{Bool},y::Type{NonSIQuantity{S,U}}) = NonSIQuantity{promote_type(Bool,S),U}
+promote_rule(x::Type{Bool},U::Type{NonSIUnit}) = NonSIQuantity{Bool,U}
+promote_rule{T,S,U}(x::Type{T},y::Type{NonSIQuantity{S,U}}) = NonSIQuantity{promote_type(T,S),U}
+promote_rule{T}(x::Type{T},U::Type{NonSIUnit}) = NonSIQuantity{T,U}
+
+# Interaction between SI and non-SI quantities
+promote_rule{S,T,U,m,kg,s,A,K,mol,cd}(x::Type{NonSIQuantity{S,U}},y::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}}) = 
+    SIQuantity{promote_type(S,T)}
+promote_rule{S,T,U,m,kg,s,A,K,mol,cd}(x::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}},y::Type{NonSIQuantity{S,U}}) = 
+    SIQuantity{promote_type(S,T)}
+
+siquantity{B}(T,U::NonSIUnit{B}) = quantity(T,B())
+siquantity{B}(T,U::Type{NonSIUnit{B}}) = quantity(T,B())
+convert{T,S,U}(::Type{SIQuantity{T}},x::NonSIQuantity{S,U}) = (siquantity(promote_type(T,S),U())(x.val))
+
+
+*{T<:NonSIUnit}(x,t::T) = NonSIQuantity{typeof(x),T}(x)
+
 unit{T,Unit}(x::NonSIQuantity{T,Unit}) = Unit()
+quantity(T::Union(Type,TypeVar),x::NonSIUnit) = NonSIQuantity{T,typeof(x)}
+quantity(T::Union(Type,TypeVar),U::Type{NonSIUnit}) = NonSIQuantity{T,U}
 
 /(x::SIQuantity,y::NonSIUnit) = x/convert(SIQuantity,y)
 /(x::NonSIUnit,y::SIQuantity) = convert(SIQuantity,x)/y
@@ -410,7 +439,7 @@ end
 
 convert(::Type{SIQuantity},x::NonSIQuantity) = x.val * convert(SIQuantity,x)
 
-export ElectronVolt, as
+export ElectronVolt, Celcius, as
 
 # Energy Units
 
