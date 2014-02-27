@@ -54,3 +54,8 @@ r1 = 1Hz:5Hz
 a = [1m 2N]
 b = [1m 2N 3V]
 @test a[1:2] == b[1:2]
+
+# Issue #10
+a = 1m
+b = 2m
+@test sqrt(a*b) == (a*b)^(1/2) == (a*b)^(1//2) == sqrt(2)*m
