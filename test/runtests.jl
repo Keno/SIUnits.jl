@@ -49,3 +49,8 @@ r1 = 1Hz:5Hz
 # Others
 
 @test mod(2µm,4µm) == 2µm
+
+# Issue #9
+a = [1m 2N]
+b = [1m 2N 3V]
+@test a[1:2] == b[1:2]

@@ -95,6 +95,9 @@ module SIUnits
     promote_rule{T,S,m,kg,s,A,K,mol,cd}(x::Type{T},y::Type{SIQuantity{S,m,kg,s,A,K,mol,cd}}) = SIQuantity{promote_type(T,S)}
     promote_rule{T,m,kg,s,A,K,mol,cd}(x::Type{T},y::Type{SIUnit{m,kg,s,A,K,mol,cd}}) = SIQuantity{T}
 
+    # One unspecified, units, one concrete (unspecified occurs as the promotion result from the rules above)
+    promote_rule{T,S,m,kg,s,A,K,mol,cd}(x::Type{SIQuantity{T}},y::Type{SIQuantity{S,m,kg,s,A,K,mol,cd}}) = SIQuantity{promote_type(T,S)}
+
     convert{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T}},x::SIUnit{m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}(one(T))
     convert{T}(::Type{SIQuantity{T}},x::T) = UnitQuantity{T}(x)
     convert{T,S}(::Type{SIQuantity{T}},x::S) = convert(SIQuantity{T},convert(T,x))
