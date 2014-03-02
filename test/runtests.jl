@@ -59,3 +59,9 @@ b = [1m 2N 3V]
 a = 1m
 b = 2m
 @test sqrt(a*b) == (a*b)^(1/2) == (a*b)^(1//2) == sqrt(2)*m
+
+# Issue #11
+au=[1m 2m 3m]
+bu=[2N 3N 4N]
+@test au*bu' == bu*au'
+@test (au*bu')[1] == dot(vec(au),vec(bu))

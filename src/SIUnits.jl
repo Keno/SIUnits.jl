@@ -228,6 +228,11 @@ module SIUnits
         SIQuantity{typeof(val),m,kg,s,A,K,mol,cd}(val)
     end
 
+    # Forwarding methods that do not affect units
+    import Base: conj
+    conj(x::SIQuantity) = typeof(x)(conj(x.val))
+
+
     float64(x::SIQuantity) = float64(x.val)
     float(x::SIQuantity) = float(x.val)
     int(x::SIQuantity) = int(x.val)
