@@ -82,9 +82,9 @@ module SIUnits
 
     # MathConsts propagate through units. Fancy!!
     promote_rule{sym,m,kg,s,A,K,mol,cd}(x::Type{MathConst{sym}},y::Type{SIUnit{m,kg,s,A,K,mol,cd}}) = 
-        SIQuantity{MathConst{s},m,kg,s,A,K,mol,cd}
+        SIQuantity{MathConst{sym},m,kg,s,A,K,mol,cd}
     promote_rule{sym,T,m,kg,s,A,K,mol,cd}(x::Type{MathConst{sym}},y::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}}) = 
-        SIQuantity{promote_type(MathConst{sym},T),m,kg,s,A,K,mol,cd}
+        SIQuantity{promote_type(MathConst{sym},T)}
 
     promote_rule{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
         A::Type{SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT}},B::Type{SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}}) = SIQuantity{promote_type(T,S)}
@@ -240,6 +240,7 @@ module SIUnits
     *(x::SIUnit,y::SIUnit) = tup2u(tup(x)+tup(y))()
     *{T}(x::SIUnit,y::SIQuantity{T}) = to_q(quantity(T,tup(y)+tup(x)),y.val)
     *{T}(x::SIQuantity{T},y::SIUnit) = to_q(quantity(T,tup(y)+tup(x)),x.val)
+    *(x::MathConst,y::SIUnit) = quantity(typeof(x),y)(x)
     function *(x::SIQuantity,y::SIQuantity) 
         ret = x.val * y.val
         to_q(quantity(typeof(ret),tup(x)+tup(y)),ret)
