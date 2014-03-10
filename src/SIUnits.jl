@@ -187,7 +187,7 @@ module SIUnits
     =={T}(x::SIQuantity{T},y::SIUnit) = (tup(x) == tup(y)) && (x.val == one(T))
     =={T}(x::SIUnit,y::SIQuantity{T}) = (tup(x) == tup(y)) && (one(T) == y.val)
 
-    import Base: sqrt, abs, colon, isless, isfinite
+    import Base: sqrt, abs, colon, isless, isfinite, isreal
 
     function colon{T,S,X,m,kg,s,A,K,mol,cd}(start::SIQuantity{T,m,kg,s,A,K,mol,cd},step::SIQuantity{S,m,kg,s,A,K,mol,cd},stop::SIQuantity{X,m,kg,s,A,K,mol,cd})
         val = colon(start.val,step.val,stop.val)
@@ -213,6 +213,8 @@ module SIUnits
         isfinite(x.val)
     end
 
+    isreal(x::SIQuantity) = isreal(x.val)
+
     function isless{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
         x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
         return isless(x.val,y.val)
@@ -231,7 +233,6 @@ module SIUnits
     # Forwarding methods that do not affect units
     import Base: conj
     conj(x::SIQuantity) = typeof(x)(conj(x.val))
-
 
     float64(x::SIQuantity) = float64(x.val)
     float(x::SIQuantity) = float(x.val)
