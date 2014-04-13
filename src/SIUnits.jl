@@ -170,7 +170,6 @@ module SIUnits
         SIQuantity{typeof(val),m*i,kg*i,s*i,A*i,K*i,mol*i,cd*i}(val)
     end
 
-
     function ^{T,m,kg,s,A,K,mol,cd}(
         x::SIQuantity{T,m,kg,s,A,K,mol,cd},r::Rational) 
         if r == 0
@@ -183,11 +182,18 @@ module SIUnits
 
     ^{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd},r::FloatingPoint) = x^rationalize(r)
 
+    function ^{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
+        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS})
+        error("Can not raise a number to a unitful quantity. Got ($(repr(unit(x))))^($(repr(unit(y))))")
+    end
+
+    ^{T,S,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd},y::SIQuantity{S,0,0,0,0,0,0,0}) = x.val^(y.val)
+
     ==(x::SIQuantity,y::SIQuantity) = (tup(x) == tup(y)) && (x.val == y.val)
     =={T}(x::SIQuantity{T},y::SIUnit) = (tup(x) == tup(y)) && (x.val == one(T))
     =={T}(x::SIUnit,y::SIQuantity{T}) = (tup(x) == tup(y)) && (one(T) == y.val)
 
-    import Base: sqrt, abs, colon, isless, isfinite, isreal
+    import Base: sqrt, abs, colon, isless, isfinite, isreal, real, imag, isnan
 
     function colon{T,S,X,m,kg,s,A,K,mol,cd}(start::SIQuantity{T,m,kg,s,A,K,mol,cd},step::SIQuantity{S,m,kg,s,A,K,mol,cd},stop::SIQuantity{X,m,kg,s,A,K,mol,cd})
         val = colon(start.val,step.val,stop.val)
@@ -213,7 +219,10 @@ module SIUnits
         isfinite(x.val)
     end
 
+    isnan(x::SIQuantity) = isnan(x.val)
     isreal(x::SIQuantity) = isreal(x.val)
+    real(x::SIQuantity) = typeof(x)(real(x.val))
+    imag(x::SIQuantity) = typeof(x)(imag(x.val))
 
     function isless{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
         x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
@@ -421,17 +430,22 @@ promote_rule{S,T,U,m,kg,s,A,K,mol,cd}(x::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}},y
 
 siquantity{B}(T,U::NonSIUnit{B}) = quantity(T,B())
 siquantity{B}(T,U::Type{NonSIUnit{B}}) = quantity(T,B())
-convert{T,S,U}(::Type{SIQuantity{T}},x::NonSIQuantity{S,U}) = (siquantity(promote_type(T,S),U())(x.val))
+#convert{T,S,U}(::Type{SIQuantity{T}},x::NonSIQuantity{S,U}) = (siquantity(promote_type(T,S),U())(x.val))
 
 
 *{T<:NonSIUnit}(x,t::T) = NonSIQuantity{typeof(x),T}(x)
 
+baseunit{BaseUnit}(x::NonSIUnit{BaseUnit}) = BaseUnit()
+baseunit{T,Unit}(x::NonSIQuantity{T,Unit}) = baseunit(unit(x))
 unit{T,Unit}(x::NonSIQuantity{T,Unit}) = Unit()
 quantity(T::Union(Type,TypeVar),x::NonSIUnit) = NonSIQuantity{T,typeof(x)}
 quantity(T::Union(Type,TypeVar),U::Type{NonSIUnit}) = NonSIQuantity{T,U}
 
+/{T,U}(x::NonSIQuantity{T,U},y::SIQuantity) = convert(SIQuantity,x)/y
+
 /(x::SIQuantity,y::NonSIUnit) = x/convert(SIQuantity,y)
 /(x::NonSIUnit,y::SIQuantity) = convert(SIQuantity,x)/y
+-{T,U}(x::NonSIQuantity{T,U}) = NonSIQuantity{T,U}(-x.val) 
 
 show{BaseUnit,Unit}(io::IO,x::NonSIUnit{BaseUnit,Unit}) = write(io,string(Unit))
 function show(io::IO,x::NonSIQuantity)
@@ -450,14 +464,21 @@ function Base.Multimedia.writemime(io::IO,::MIME"text/mathtex+latex",x::NonSIQua
     Base.Multimedia.writemime(io,MIME("text/mathtex+latex"),unit(x))
 end
 
-convert(::Type{SIQuantity},x::NonSIQuantity) = x.val * convert(SIQuantity,x)
+# No, these two are not the same. Sometimes we get SIQuantities that are not specialized 
+# on the type out of promotion, hence the first method, but we still need the second method
+# to be more specific that the convert methods of plain SIUnits above.
+convert(::Type{SIQuantity},x::NonSIQuantity) = x.val * convert(SIQuantity,unit(x))
+convert{T}(::Type{SIQuantity{T}},x::NonSIQuantity) = x.val * convert(SIQuantity,unit(x))
 
-export ElectronVolt, Celcius, as
+convert{T}(::Type{NonSIQuantity{T}},U::NonSIUnit) = NonSIQuantity{T,U}(one(T))
+convert{T,U}(::Type{NonSIQuantity{T,U}},x::T) = UnitQuantity{T}(x)
+#convert{T}(::Type{NonSIQuantity{T}},x::T) = UnitQuantity{T}(x)
+#convert{T,S}(::Type{NonSIQuantity{T}},x::S) = convert(NonSIQuantity{T},convert(T,x))
+convert{T,U,S}(::Type{NonSIQuantity{T,U}},x::S) = convert(NonSIQuantity{T,U},convert(T,x))
+convert{T,U}(::Type{NonSIQuantity{T,U}},x::NonSIQuantity{T,U}) = x
+convert{T,S,U1,U2}(::Type{NonSIQuantity{T,U1}},x::NonSIQuantity{S,U2}) = NonSIQuantity{T,U2}(convert(T,x.val))
 
-# Energy Units
-
-const ElectronVolt = NonSIUnit{typeof(Joule),:eV}()
-convert(::Type{SIQuantity},::typeof(ElectronVolt)) = 1.60217656535e-19Joule
+export as
 
 function as{U<:NonSIUnit}(x::SIQuantity,y::U)
     val = x/y
@@ -471,6 +492,14 @@ function as{U<:NonSIUnit,Q<:SIQuantity}(X::AbstractArray{Q},y::U)
     NonSIQuantity{typeof(val),U}(val)
 end
 
+function as(x::NonSIQuantity,y::SIUnit)
+    @assert baseunit(x) == y
+    convert(SIQuantity,x)
+end
+
+as(x::NonSIQuantity,y::SIQuantity) = as(x,unit(y))
+
+include("nonsiunits.jl")
 include("shortunits.jl")
 
 end # module
