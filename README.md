@@ -1,6 +1,7 @@
 # SIUnits
 
 [![Build Status](https://travis-ci.org/loladiro/SIUnits.jl.png)](https://travis-ci.org/loladiro/SIUnits.jl)
+[![Coverage Status](https://coveralls.io/repos/loladiro/SIUnits.jl/badge.png?branch=master)](https://coveralls.io/r/loladiro/SIUnits.jl?branch=master)
 
 This package provides efficient unit-checked computations based for units in the
 SIUnits systems. To use this package use (after installing it using Pkg.add)
