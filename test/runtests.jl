@@ -94,3 +94,9 @@ bu=[2N 3N 4N]
 a = 1m
 b = 2mm
 @test (pi*a^2)/b == (pi/2)*(m^2/mm)
+
+# Comparisons with numbers and different units
+a = SIUnits.UnitQuantity{Float64}(3.0)
+@test a < 4
+@test 2.8 < a
+@test_throws_compat MethodError 1m < 2kg

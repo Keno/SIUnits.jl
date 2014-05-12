@@ -224,8 +224,20 @@ module SIUnits
     real(x::SIQuantity) = typeof(x)(real(x.val))
     imag(x::SIQuantity) = typeof(x)(imag(x.val))
 
-    function isless{T,S,mS,kgS,sS,AS,KS,molS,cdS,mT,kgT,sT,AT,KT,molT,cdT}(
-        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS}) 
+    function isless{T}(x::SIQuantity{T,0,0,0,0,0,0,0}, y::SIQuantity{T,0,0,0,0,0,0,0})
+        return isless(x.val,y.val)
+    end
+    function isless{T,S}(x::SIQuantity{T,0,0,0,0,0,0,0}, y::SIQuantity{S,0,0,0,0,0,0,0})
+        return isless(x.val,y.val)
+    end
+    function isless{T}(x::SIQuantity{T,0,0,0,0,0,0,0}, y::Number)
+        return isless(x.val,y)
+    end
+    function isless{T}(x::Number, y::SIQuantity{T,0,0,0,0,0,0,0})
+        return isless(x,y.val)
+    end
+    function isless{T,S,mT,kgT,sT,AT,KT,molT,cdT}(
+        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT},y::SIQuantity{S,mT,kgT,sT,AT,KT,molT,cdT}) 
         return isless(x.val,y.val)
     end
 
