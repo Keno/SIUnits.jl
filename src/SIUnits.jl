@@ -454,10 +454,14 @@ quantity(T::Union(Type,TypeVar),x::NonSIUnit) = NonSIQuantity{T,typeof(x)}
 quantity(T::Union(Type,TypeVar),U::Type{NonSIUnit}) = NonSIQuantity{T,U}
 
 /{T,U}(x::NonSIQuantity{T,U},y::SIQuantity) = convert(SIQuantity,x)/y
+/(x::NonSIUnit,y::SIUnit) = convert(SIQuantity,x)/y
+/(x::SIUnit,y::NonSIUnit) = x/convert(SIQuantity,y)
 
 /(x::SIQuantity,y::NonSIUnit) = x/convert(SIQuantity,y)
 /(x::NonSIUnit,y::SIQuantity) = convert(SIQuantity,x)/y
 -{T,U}(x::NonSIQuantity{T,U}) = NonSIQuantity{T,U}(-x.val) 
+
+^(x::Union(NonSIQuantity,NonSIUnit),i::Integer) = convert(SIQuantity,x)^i
 
 show{BaseUnit,Unit}(io::IO,x::NonSIUnit{BaseUnit,Unit}) = write(io,string(Unit))
 function show(io::IO,x::NonSIQuantity)

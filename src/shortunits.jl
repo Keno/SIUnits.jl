@@ -6,7 +6,7 @@ module ShortUnits
     export µg, mg, g, kg, µm, mm, cm, m, km, mJ, J, MJ, HJ, fF, pF, nF, µF, mF,
         F, pΩ, nΩ, µΩ, mΩ, Ω, kΩ, MΩ, mV, V, MV, mHz, Hz, MHz, GHz, THz, fA, pA, 
         nA, µA, mA, A, C, N, mol, ns, ms, µs, s, S, nW, µW, mW, W, MW, GW, eV, 
-        K, mPa, Pa, kPa, MPa, GPa, nm, torr, mtorr
+        K, mPa, Pa, kPa, MPa, GPa, nm, torr, mtorr, atm
 
     using SIUnits
 
@@ -91,4 +91,6 @@ module ShortUnits
 
     const torr  = Torr
     const mtorr = Milli*Torr
+
+    const atm   = Atmosphere
 end
