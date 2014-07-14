@@ -11,7 +11,7 @@ module SIUnits
     immutable SIUnit{m,kg,s,A,K,mol,cd} <: Number
     end 
 
-    abstract SIRanges{T<:Real,m,kg,s,A,K,mol,cd} <: Ranges{T}
+    abstract SIRanges{T<:Real,m,kg,s,A,K,mol,cd} <: Ranges{SIQuantity{T,m,kg,s,A,K,mol,cd}}
 
     immutable SIRange{T<:Real,m,kg,s,A,K,mol,cd} <: SIRanges{T,m,kg,s,A,K,mol,cd}
         val::Range{T}
@@ -36,7 +36,7 @@ module SIUnits
         end
     end
     show(io::IO, r::SIRange1) = print(io, first(r),':',last(r))
-    getindex(r::SIRanges,i::Integer) = (quantity(r)(getindex(x.val,i)))
+    getindex(r::SIRanges,i::Integer) = (quantity(r)(getindex(r.val,i)))
     function next(r::SIRanges, i) 
         v, j = next(r.val,i)
         to_q(quantity(r),v), j

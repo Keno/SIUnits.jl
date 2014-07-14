@@ -68,6 +68,7 @@ r1 = 1Hz:5Hz
 @test length(r1) == 5
 
 @test collect(1Hz:5Hz) == collect(1:5)Hz # Tests the iteration protocol
+@test r1[1] == 1Hz # Test indexing
 
 # Others
 
