@@ -3,20 +3,20 @@
 # and being useful. We might in ther future give up and just generate all the orders of
 # maginuted for everything
 module ShortUnits
-    export µg, mg, g, kg, µm, mm, cm, m, km, mJ, J, MJ, HJ, fF, pF, nF, µF, mF,
-        F, pΩ, nΩ, µΩ, mΩ, Ω, kΩ, MΩ, mV, V, MV, mHz, Hz, MHz, GHz, THz, fA, pA, 
-        nA, µA, mA, A, C, N, mol, ns, ms, µs, s, S, nW, µW, mW, W, MW, GW, eV, 
+    export μg, mg, g, kg, μm, mm, cm, m, km, mJ, J, MJ, HJ, fF, pF, nF, μF, mF,
+        F, pΩ, nΩ, μΩ, mΩ, Ω, kΩ, MΩ, mV, V, MV, mHz, Hz, MHz, GHz, THz, fA, pA,
+        nA, μA, mA, A, C, N, mol, ns, ms, μs, s, S, nW, μW, mW, W, MW, GW, eV,
         K, mPa, Pa, kPa, MPa, GPa, nm, torr, mtorr
 
     using SIUnits
 
-    const µg    = Micro * Gram
+    const μg    = Micro * Gram
     const mg    = Milli * Gram
     const g     = Gram
     const kg    = KiloGram
 
     const nm    = Nano * Meter
-    const µm    = Micro * Meter
+    const μm    = Micro * Meter
     const mm    = Milli * Meter
     const cm    = CentiMeter
     const m     = Meter
@@ -30,13 +30,13 @@ module ShortUnits
     const fF    = Femto*Farad
     const pF    = Pico*Farad
     const nF    = Nano*Farad
-    const µF    = Micro*Farad
+    const μF    = Micro*Farad
     const mF    = Milli*Farad
     const F     = Farad
 
     const pΩ    = Pico*Ohm
     const nΩ    = Nano*Ohm
-    const µΩ    = Micro*Ohm
+    const μΩ    = Micro*Ohm
     const mΩ    = Milli*Ohm
     const Ω     = Ohm
     const kΩ    = Kilo*Ohm
@@ -48,7 +48,7 @@ module ShortUnits
 
     const ns    = Nano*Second
     const ms    = Milli*Second
-    const µs    = Micro*Second
+    const μs    = Micro*Second
     const s     = Second
 
     const S     = Siemens
@@ -62,7 +62,7 @@ module ShortUnits
     const fA    = Femto*Ampere
     const pA    = Pico*Ampere
     const nA    = Nano*Ampere
-    const µA    = Micro*Ampere
+    const μA    = Micro*Ampere
     const mA    = Milli*Ampere
     const A     = Ampere
 
@@ -77,7 +77,7 @@ module ShortUnits
     const N     = Newton
 
     const nW    = Nano*Watt
-    const µW    = Micro*Watt
+    const μW    = Micro*Watt
     const mW    = Milli*Watt
     const W     = Watt
     const MW    = Mega*Watt

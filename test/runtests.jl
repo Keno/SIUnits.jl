@@ -72,7 +72,7 @@ r1 = 1Hz:5Hz
 
 # Others
 
-@test mod(2µm,4µm) == 2µm
+@test mod(2μm,4μm) == 2μm
 
 # Issue #9
 a = [1m 2N]
