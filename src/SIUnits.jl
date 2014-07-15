@@ -11,14 +11,10 @@ module SIUnits
     immutable SIUnit{m,kg,s,A,K,mol,cd} <: Number
     end 
 
-    abstract SIRanges{T<:Real,m,kg,s,A,K,mol,cd} <: Ranges{SIQuantity{T,m,kg,s,A,K,mol,cd}}
+    abstract SIRanges{T,m,kg,s,A,K,mol,cd} <: Ranges{SIQuantity{T,m,kg,s,A,K,mol,cd}}
 
-    immutable SIRange{T<:Real,m,kg,s,A,K,mol,cd} <: SIRanges{T,m,kg,s,A,K,mol,cd}
-        val::Range{T}
-    end
-
-    immutable SIRange1{T<:Real,m,kg,s,A,K,mol,cd} <: SIRanges{T,m,kg,s,A,K,mol,cd}
-        val::Range1{T}
+    immutable SIRange{R<:Range,T<:Real,m,kg,s,A,K,mol,cd} <: SIRanges{T,m,kg,s,A,K,mol,cd}
+        val::R
     end
 
     unit{T,m,kg,s,A,K,mol,cd}(x::SIRanges{T,m,kg,s,A,K,mol,cd}) = SIUnit{m,kg,s,A,K,mol,cd}()
@@ -35,7 +31,7 @@ module SIUnits
             print(io, start(r),':',step(r),':',last(r))
         end
     end
-    show(io::IO, r::SIRange1) = print(io, first(r),':',last(r))
+    show{T<:UnitRange}(io::IO, r::SIRange{T}) = print(io, first(r),':',last(r))
     getindex(r::SIRanges,i::Integer) = (quantity(r)(getindex(r.val,i)))
     function next(r::SIRanges, i) 
         v, j = next(r.val,i)
@@ -197,12 +193,12 @@ module SIUnits
 
     function colon{T,S,X,m,kg,s,A,K,mol,cd}(start::SIQuantity{T,m,kg,s,A,K,mol,cd},step::SIQuantity{S,m,kg,s,A,K,mol,cd},stop::SIQuantity{X,m,kg,s,A,K,mol,cd})
         val = colon(start.val,step.val,stop.val)
-        SIRange{eltype(val),m,kg,s,A,K,mol,cd}(val)
+        SIRange{typeof(val),eltype(val),m,kg,s,A,K,mol,cd}(val)
     end
 
     function colon{T,S,m,kg,s,A,K,mol,cd}(start::SIQuantity{T,m,kg,s,A,K,mol,cd},stop::SIQuantity{S,m,kg,s,A,K,mol,cd})
         val = colon(start.val,stop.val)
-        SIRange1{eltype(val),m,kg,s,A,K,mol,cd}(val)
+        SIRange{typeof(val),eltype(val),m,kg,s,A,K,mol,cd}(val)
     end
 
     function sqrt{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd})
