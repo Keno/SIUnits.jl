@@ -13,6 +13,11 @@ module SIUnits
 
     abstract SIRanges{T,m,kg,s,A,K,mol,cd} <: Ranges{SIQuantity{T,m,kg,s,A,K,mol,cd}}
 
+    if !isdefined(Base, :UnitRange)
+        const Range = Ranges # Deprecations introduced early in the 0.3 cycle
+        const UnitRange = Range1
+    end
+
     immutable SIRange{R<:Range,T<:Real,m,kg,s,A,K,mol,cd} <: SIRanges{T,m,kg,s,A,K,mol,cd}
         val::R
     end
