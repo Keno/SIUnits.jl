@@ -19,7 +19,9 @@ end
 @test_throws_compat ErrorException 1//2V - 1V
 @test_throws_compat ErrorException 1V + 2s + 2kg
 @test 1V + zero(1V) == 1V
+@test 1V + zero(typeof(1V)) == 1V
 @test 1V * one(1V) == 1V
+@test 1V * one(typeof(1V)) == 1V
 
 OneNewton = 1*(kg*m/s^2)
 @test OneNewton*(1s)^2 == 1kg*m

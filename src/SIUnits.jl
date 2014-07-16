@@ -27,7 +27,9 @@ module SIUnits
     import Base: length, getindex, next, float64, float, int, show, start, step, last, done, first, eltype, one, zero
 
     one(x::SIQuantity) = SIQuantity(one(x.val))
+    one{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}}) = SIQuantity(one(T))
     zero(x::SIQuantity) = zero(x.val) * unit(x)
+    zero{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}}) = zero(T) * SIUnit{m,kg,s,A,K,mol,cd}()
 
     # This is all nessecary because SIQuanity{T<:Real} !<: Real
     show(io::IO, x::SIRanges) = (show(io, x.val); show(io,unit(x)))
