@@ -36,9 +36,9 @@ module SIUnits
     show(io::IO, x::SIRanges) = (show(io, x.val); show(io,unit(x)))
     function show(io::IO, r::SIRange)
         if step(r) == zero(quantity(r))
-            print(io, "SIRange(",start(r),",",step(r),",",length(r),")")
+            print(io, "SIRange(",first(r),",",step(r),",",length(r),")")
         else
-            print(io, start(r),':',step(r),':',last(r))
+            print(io, first(r),':',step(r),':',last(r))
         end
     end
     show{T<:UnitRange}(io::IO, r::SIRange{T}) = print(io, first(r),':',last(r))
