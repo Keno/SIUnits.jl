@@ -78,6 +78,17 @@ r1 = 1Hz:5Hz
 @test collect(1Hz:5Hz) == collect(1:5)Hz # Tests the iteration protocol
 @test r1[1] == 1Hz # Test indexing
 
+# Ranges: Ensure forwarded methods are working appropriately
+@test eltype(r1) == typeof(1Hz)
+@test first(r1) == step(r1) == 1Hz
+@test last(r1) == 5Hz
+@test r1 - 1Hz == 0Hz:4Hz
+@test 1Hz - r1 == 0Hz:-1Hz:-4Hz
+@test r1 + 1Hz == 1Hz + r1 == 2Hz:6Hz
+@test r1 * 2s == 2s * r1 == 2:2:10
+@test r1 * 1m == 1m * r1 == 1Hz*m:5Hz*m
+@test r1 / 2Hz == 0.5:0.5:2.5
+
 # Others
 
 @test mod(2µm,4µm) == 2µm
