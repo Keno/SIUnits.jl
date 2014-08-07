@@ -109,3 +109,14 @@ a = SIUnits.UnitQuantity{Float64}(3.0)
 @test a < 4
 @test 2.8 < a
 @test_throws_compat MethodError 1m < 2kg
+
+# Issue #27
+@test ([1s]/(1s))[1] == 1
+@test ([1s]/(1.0s))[1] == 1
+@test ([1.0s]/(1s))[1] == 1
+@test ([1.0s]/(1.0s))[1] == 1
+
+@test ([1s]*(1s))[1] == 1s*s
+@test ([1s]*(1.0s))[1] == 1s*s
+@test ([1.0s]*(1s))[1] == 1s*s
+@test ([1.0s]*(1.0s))[1] == 1s*s
