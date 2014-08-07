@@ -69,7 +69,7 @@ module SIUnits
         end
     end
 
-    import Base: +, -, *, /, //, ^, promote_rule, convert, show, ==, mod
+    import Base: +, -, *, /, //, ^, promote_rule, promote_type, convert, show, ==, mod
 
     export quantity, @quantity
 
@@ -103,6 +103,11 @@ module SIUnits
 
     # One unspecified, units, one concrete (unspecified occurs as the promotion result from the rules above)
     promote_rule{T,S,m,kg,s,A,K,mol,cd}(x::Type{SIQuantity{T}},y::Type{SIQuantity{S,m,kg,s,A,K,mol,cd}}) = SIQuantity{promote_type(T,S)}
+
+    # Unlike most other types, the promotion of two identitical SIQuantities is
+    # not that type itself. As such, the promote_type behavior itself must be
+    # overridden. C.f. https://github.com/Keno/SIUnits.jl/issues/27
+    promote_type{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}}, ::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}}) = SIQuantity{T}
 
     convert{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T}},x::SIUnit{m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}(one(T))
     convert{T}(::Type{SIQuantity{T}},x::T) = UnitQuantity{T}(x)
