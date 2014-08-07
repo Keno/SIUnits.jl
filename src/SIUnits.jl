@@ -22,6 +22,8 @@ module SIUnits
         val::R
     end
 
+    typealias UnitTuple NTuple{7,Int64}
+
     unit{T,m,kg,s,A,K,mol,cd}(x::SIRanges{T,m,kg,s,A,K,mol,cd}) = SIUnit{m,kg,s,A,K,mol,cd}()
     quantity{T,m,kg,s,A,K,mol,cd}(x::SIRanges{T,m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}
 
@@ -55,8 +57,20 @@ module SIUnits
     for func in (:first,:step,:last)
         @eval $(func)(r::SIRanges) = to_q(quantity(r),$(func)(r.val))
     end
-
-    typealias UnitTuple NTuple{7,Int64}
+    # Forward some linear range transformations to the wrapped range
+    rangequantity{R<:Range}(::Type{R},tup::UnitTuple) = SIRange{R,eltype(R),tup[1],tup[2],tup[3],tup[4],tup[5],tup[6],tup[7]}
+    for func in (VERSION < v"0.3-" ? (:+, :-) : (:.+, :.-)) # version 0.3 swaps fallbacks
+        @eval $(func){T,S,m,kg,s,A,K,mol,cd}(x::SIRanges{T,m,kg,s,A,K,mol,cd}, y::SIQuantity{S,m,kg,s,A,K,mol,cd}) = (val = $(func)(x.val, y.val); SIRange{typeof(val),eltype(val),m,kg,s,A,K,mol,cd}(val))
+        @eval $(func){T,S,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd}, y::SIRanges{S,m,kg,s,A,K,mol,cd}) = (val = $(func)(x.val, y.val); SIRange{typeof(val),eltype(val),m,kg,s,A,K,mol,cd}(val))
+    end
+    ./(x::SIRanges, y::SIQuantity) = (val = ./(x.val, y.val); rangequantity(typeof(val),tup(x)-tup(y))(val))
+    .*(x::SIRanges, y::SIQuantity) = (val = .*(x.val, y.val); rangequantity(typeof(val),tup(x)+tup(y))(val))
+    .*(x::SIQuantity, y::SIRanges) = (val = .*(x.val, y.val); rangequantity(typeof(val),tup(x)+tup(y))(val))
+    # Version 0.2 assumes all Ranges have start and len fields in ==, and
+    # the fallback in 0.3 needlessly iterates through all values
+    ==(r::SIRanges, s::SIRanges) = r.val == s.val && tup(r) == tup(s)
+    ==(s::SIRanges, r::Range) = s.val == r && tup(s) == (0,0,0,0,0,0,0)
+    ==(r::Range, s::SIRanges) = r == s.val && tup(s) == (0,0,0,0,0,0,0)
 
     tup2u(tup) = SIUnit{tup[1],tup[2],tup[3],tup[4],tup[5],tup[6],tup[7]}
     quantity(T::Type,tup::UnitTuple) = quantity(T,tup2u(tup)())
@@ -81,6 +95,7 @@ module SIUnits
 
     tup{m,kg,s,A,K,mol,cd}(u::SIUnit{m,kg,s,A,K,mol,cd}) = (m,kg,s,A,K,mol,cd)
     tup{T,m,kg,s,A,K,mol,cd}(u::SIQuantity{T,m,kg,s,A,K,mol,cd}) = (m,kg,s,A,K,mol,cd)
+    tup{T,m,kg,s,A,K,mol,cd}(u::SIRanges{T,m,kg,s,A,K,mol,cd}) = (m,kg,s,A,K,mol,cd)
 
     macro quantity(expr,unit)
         esc(:(SIUnits.SIQuantity{$expr,SIUnits.tup($unit)...}))
