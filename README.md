@@ -1,7 +1,7 @@
 # SIUnits
 
-[![Build Status](https://travis-ci.org/loladiro/SIUnits.jl.png)](https://travis-ci.org/loladiro/SIUnits.jl)
-[![Coverage Status](https://coveralls.io/repos/loladiro/SIUnits.jl/badge.png?branch=master)](https://coveralls.io/r/loladiro/SIUnits.jl?branch=master)
+[![Build Status](https://travis-ci.org/Keno/SIUnits.jl.svg?branch=master)](https://travis-ci.org/Keno/SIUnits.jl)
+[![Coverage Status](https://img.shields.io/coveralls/Keno/SIUnits.jl.svg)](https://coveralls.io/r/Keno/SIUnits.jl)
 
 This package provides efficient unit-checked computations based for units in the
 SIUnits systems. To use this package use (after installing it using Pkg.add)

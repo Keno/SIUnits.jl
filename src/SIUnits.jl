@@ -11,31 +11,39 @@ module SIUnits
     immutable SIUnit{m,kg,s,A,K,mol,cd} <: Number
     end 
 
-    abstract SIRanges{T<:Real,m,kg,s,A,K,mol,cd} <: Ranges{SIQuantity{T,m,kg,s,A,K,mol,cd}}
+    abstract SIRanges{T,m,kg,s,A,K,mol,cd} <: Ranges{SIQuantity{T,m,kg,s,A,K,mol,cd}}
 
-    immutable SIRange{T<:Real,m,kg,s,A,K,mol,cd} <: SIRanges{T,m,kg,s,A,K,mol,cd}
-        val::Range{T}
+    if !isdefined(Base, :UnitRange)
+        const Range = Ranges # Deprecations introduced early in the 0.3 cycle
+        const UnitRange = Range1
     end
 
-    immutable SIRange1{T<:Real,m,kg,s,A,K,mol,cd} <: SIRanges{T,m,kg,s,A,K,mol,cd}
-        val::Range1{T}
+    immutable SIRange{R<:Range,T<:Real,m,kg,s,A,K,mol,cd} <: SIRanges{T,m,kg,s,A,K,mol,cd}
+        val::R
     end
+
+    typealias UnitTuple NTuple{7,Int64}
 
     unit{T,m,kg,s,A,K,mol,cd}(x::SIRanges{T,m,kg,s,A,K,mol,cd}) = SIUnit{m,kg,s,A,K,mol,cd}()
     quantity{T,m,kg,s,A,K,mol,cd}(x::SIRanges{T,m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}
 
-    import Base: length, getindex, next, float64, float, int, show, start, step, last, done, first, eltype
+    import Base: length, getindex, next, float64, float, int, show, start, step, last, done, first, eltype, one, zero
+
+    one(x::SIQuantity) = one(x.val)
+    one{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}}) = one(T)
+    zero(x::SIQuantity) = zero(x.val) * unit(x)
+    zero{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}}) = zero(T) * SIUnit{m,kg,s,A,K,mol,cd}()
 
     # This is all nessecary because SIQuanity{T<:Real} !<: Real
     show(io::IO, x::SIRanges) = (show(io, x.val); show(io,unit(x)))
     function show(io::IO, r::SIRange)
         if step(r) == zero(quantity(r))
-            print(io, "SIRange(",start(r),",",step(r),",",length(r),")")
+            print(io, "SIRange(",first(r),",",step(r),",",length(r),")")
         else
-            print(io, start(r),':',step(r),':',last(r))
+            print(io, first(r),':',step(r),':',last(r))
         end
     end
-    show(io::IO, r::SIRange1) = print(io, first(r),':',last(r))
+    show{T<:UnitRange}(io::IO, r::SIRange{T}) = print(io, first(r),':',last(r))
     getindex(r::SIRanges,i::Integer) = (quantity(r)(getindex(r.val,i)))
     function next(r::SIRanges, i) 
         v, j = next(r.val,i)
@@ -49,8 +57,20 @@ module SIUnits
     for func in (:first,:step,:last)
         @eval $(func)(r::SIRanges) = to_q(quantity(r),$(func)(r.val))
     end
-
-    typealias UnitTuple NTuple{7,Int64}
+    # Forward some linear range transformations to the wrapped range
+    rangequantity{R<:Range}(::Type{R},tup::UnitTuple) = SIRange{R,eltype(R),tup[1],tup[2],tup[3],tup[4],tup[5],tup[6],tup[7]}
+    for func in (VERSION < v"0.3-" ? (:+, :-) : (:.+, :.-)) # version 0.3 swaps fallbacks
+        @eval $(func){T,S,m,kg,s,A,K,mol,cd}(x::SIRanges{T,m,kg,s,A,K,mol,cd}, y::SIQuantity{S,m,kg,s,A,K,mol,cd}) = (val = $(func)(x.val, y.val); SIRange{typeof(val),eltype(val),m,kg,s,A,K,mol,cd}(val))
+        @eval $(func){T,S,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd}, y::SIRanges{S,m,kg,s,A,K,mol,cd}) = (val = $(func)(x.val, y.val); SIRange{typeof(val),eltype(val),m,kg,s,A,K,mol,cd}(val))
+    end
+    ./(x::SIRanges, y::SIQuantity) = (val = ./(x.val, y.val); rangequantity(typeof(val),tup(x)-tup(y))(val))
+    .*(x::SIRanges, y::SIQuantity) = (val = .*(x.val, y.val); rangequantity(typeof(val),tup(x)+tup(y))(val))
+    .*(x::SIQuantity, y::SIRanges) = (val = .*(x.val, y.val); rangequantity(typeof(val),tup(x)+tup(y))(val))
+    # Version 0.2 assumes all Ranges have start and len fields in ==, and
+    # the fallback in 0.3 needlessly iterates through all values
+    ==(r::SIRanges, s::SIRanges) = r.val == s.val && tup(r) == tup(s)
+    ==(s::SIRanges, r::Range) = s.val == r && tup(s) == (0,0,0,0,0,0,0)
+    ==(r::Range, s::SIRanges) = r == s.val && tup(s) == (0,0,0,0,0,0,0)
 
     tup2u(tup) = SIUnit{tup[1],tup[2],tup[3],tup[4],tup[5],tup[6],tup[7]}
     quantity(T::Type,tup::UnitTuple) = quantity(T,tup2u(tup)())
@@ -63,7 +83,7 @@ module SIUnits
         end
     end
 
-    import Base: +, -, *, /, //, ^, promote_rule, convert, show, ==, mod
+    import Base: +, -, *, /, //, ^, promote_rule, promote_type, convert, show, ==, mod
 
     export quantity, @quantity
 
@@ -75,6 +95,7 @@ module SIUnits
 
     tup{m,kg,s,A,K,mol,cd}(u::SIUnit{m,kg,s,A,K,mol,cd}) = (m,kg,s,A,K,mol,cd)
     tup{T,m,kg,s,A,K,mol,cd}(u::SIQuantity{T,m,kg,s,A,K,mol,cd}) = (m,kg,s,A,K,mol,cd)
+    tup{T,m,kg,s,A,K,mol,cd}(u::SIRanges{T,m,kg,s,A,K,mol,cd}) = (m,kg,s,A,K,mol,cd)
 
     macro quantity(expr,unit)
         esc(:(SIUnits.SIQuantity{$expr,SIUnits.tup($unit)...}))
@@ -97,6 +118,11 @@ module SIUnits
 
     # One unspecified, units, one concrete (unspecified occurs as the promotion result from the rules above)
     promote_rule{T,S,m,kg,s,A,K,mol,cd}(x::Type{SIQuantity{T}},y::Type{SIQuantity{S,m,kg,s,A,K,mol,cd}}) = SIQuantity{promote_type(T,S)}
+
+    # Unlike most other types, the promotion of two identitical SIQuantities is
+    # not that type itself. As such, the promote_type behavior itself must be
+    # overridden. C.f. https://github.com/Keno/SIUnits.jl/issues/27
+    promote_type{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}}, ::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}}) = SIQuantity{T}
 
     if VERSION >= v"0.4-dev"
         eval(quote
@@ -202,12 +228,12 @@ module SIUnits
 
     function colon{T,S,X,m,kg,s,A,K,mol,cd}(start::SIQuantity{T,m,kg,s,A,K,mol,cd},step::SIQuantity{S,m,kg,s,A,K,mol,cd},stop::SIQuantity{X,m,kg,s,A,K,mol,cd})
         val = colon(start.val,step.val,stop.val)
-        SIRange{eltype(val),m,kg,s,A,K,mol,cd}(val)
+        SIRange{typeof(val),eltype(val),m,kg,s,A,K,mol,cd}(val)
     end
 
     function colon{T,S,m,kg,s,A,K,mol,cd}(start::SIQuantity{T,m,kg,s,A,K,mol,cd},stop::SIQuantity{S,m,kg,s,A,K,mol,cd})
         val = colon(start.val,stop.val)
-        SIRange1{eltype(val),m,kg,s,A,K,mol,cd}(val)
+        SIRange{typeof(val),eltype(val),m,kg,s,A,K,mol,cd}(val)
     end
 
     function sqrt{T,m,kg,s,A,K,mol,cd}(x::SIQuantity{T,m,kg,s,A,K,mol,cd})
@@ -344,13 +370,13 @@ module SIUnits
     end
 
     function show{m,kg,s,A,K,mol,cd}(io::IO,x::SIUnit{m,kg,s,A,K,mol,cd})
-        kg != 0 && print(io,"kg",(kg == 1 ? " " :superscript(kg)))
-        m != 0 && print(io,"m",(m == 1 ? " " : superscript(m)))
-        s != 0 && print(io,"s",(s == 1 ? " " :superscript(s)))
-        A != 0 && print(io,"A",(A == 1 ? " " :superscript(A)))
-        K != 0 && print(io,"K",(K == 1 ? " " :superscript(K)))
-        mol != 0 && print(io,"mol",(mol == 1 ? " " :superscript(mol)))
-        cd != 0 && print(io,"cd",(cd == 1 ? " " :uperscript(cd)))
+        kg  != 0 && print(io, "kg",  (kg  == 1 ? " " : superscript(kg)))
+        m   != 0 && print(io, "m",   (m   == 1 ? " " : superscript(m)))
+        s   != 0 && print(io, "s",   (s   == 1 ? " " : superscript(s)))
+        A   != 0 && print(io, "A",   (A   == 1 ? " " : superscript(A)))
+        K   != 0 && print(io, "K",   (K   == 1 ? " " : superscript(K)))
+        mol != 0 && print(io, "mol", (mol == 1 ? " " : superscript(mol)))
+        cd  != 0 && print(io, "cd",  (cd  == 1 ? " " : superscript(cd)))
     end
 
     function show{T,m,kg,s,A,K,mol,cd}(io::IO,x::SIQuantity{T,m,kg,s,A,K,mol,cd})

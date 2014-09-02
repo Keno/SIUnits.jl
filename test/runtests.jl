@@ -18,6 +18,14 @@ end
 @test (1//2)V - 1V == (-1//2)V
 @test_throws_compat ErrorException 1//2V - 1V
 @test_throws_compat ErrorException 1V + 2s + 2kg
+@test 1V + zero(1V) == 1V
+@test 1V + zero(typeof(1V)) == 1V
+@test 1V * one(1V) == 1V
+@test 1V * one(typeof(1V)) == 1V
+@test 3V / 3V == one(3)
+@test 3.V / 3.V === one(3.)
+@test isa(3.V / 3.V, typeof(one(3.)))
+@test isa(one(3.V), typeof(one(3.)))
 
 OneNewton = 1*(kg*m/s^2)
 @test OneNewton*(1s)^2 == 1kg*m
@@ -70,6 +78,17 @@ r1 = 1Hz:5Hz
 @test collect(1Hz:5Hz) == collect(1:5)Hz # Tests the iteration protocol
 @test r1[1] == 1Hz # Test indexing
 
+# Ranges: Ensure forwarded methods are working appropriately
+@test eltype(r1) == typeof(1Hz)
+@test first(r1) == step(r1) == 1Hz
+@test last(r1) == 5Hz
+@test r1 - 1Hz == 0Hz:4Hz
+@test 1Hz - r1 == 0Hz:-1Hz:-4Hz
+@test r1 + 1Hz == 1Hz + r1 == 2Hz:6Hz
+@test r1 * 2s == 2s * r1 == 2:2:10
+@test r1 * 1m == 1m * r1 == 1Hz*m:5Hz*m
+@test r1 / 2Hz == 0.5:0.5:2.5
+
 # Others
 
 @test mod(2µm,4µm) == 2µm
@@ -101,3 +120,14 @@ a = SIUnits.UnitQuantity{Float64}(3.0)
 @test a < 4
 @test 2.8 < a
 @test_throws_compat MethodError 1m < 2kg
+
+# Issue #27
+@test ([1s]/(1s))[1] == 1
+@test ([1s]/(1.0s))[1] == 1
+@test ([1.0s]/(1s))[1] == 1
+@test ([1.0s]/(1.0s))[1] == 1
+
+@test ([1s]*(1s))[1] == 1s*s
+@test ([1s]*(1.0s))[1] == 1s*s
+@test ([1.0s]*(1s))[1] == 1s*s
+@test ([1.0s]*(1.0s))[1] == 1s*s
