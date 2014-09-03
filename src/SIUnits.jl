@@ -124,6 +124,11 @@ module SIUnits
     # overridden. C.f. https://github.com/Keno/SIUnits.jl/issues/27
     promote_type{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}}, ::Type{SIQuantity{T,m,kg,s,A,K,mol,cd}}) = SIQuantity{T}
 
+    if VERSION >= v"0.4-dev"
+        eval(quote
+            convert{T}(::Type{SIQuantity{T}},x::Dates.Period) = error("Conversion from Period to SIQuantity not defined")
+        end)
+    end
     convert{T,m,kg,s,A,K,mol,cd}(::Type{SIQuantity{T}},x::SIUnit{m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}(one(T))
     convert{T}(::Type{SIQuantity{T}},x::T) = UnitQuantity{T}(x)
     convert{T,S}(::Type{SIQuantity{T}},x::S) = convert(SIQuantity{T},convert(T,x))
@@ -516,6 +521,11 @@ convert{T}(::Type{NonSIQuantity{T}},U::NonSIUnit) = NonSIQuantity{T,U}(one(T))
 convert{T,U}(::Type{NonSIQuantity{T,U}},x::T) = UnitQuantity{T}(x)
 #convert{T}(::Type{NonSIQuantity{T}},x::T) = UnitQuantity{T}(x)
 #convert{T,S}(::Type{NonSIQuantity{T}},x::S) = convert(NonSIQuantity{T},convert(T,x))
+if VERSION >= v"0.4-dev"
+    eval(quote
+        convert{T,U}(::Type{NonSIQuantity{T,U}},x::Dates.Period) = error("Conversion from Period to NonSIQuantity not defined")
+    end)
+end
 convert{T,U,S}(::Type{NonSIQuantity{T,U}},x::S) = convert(NonSIQuantity{T,U},convert(T,x))
 convert{T,U}(::Type{NonSIQuantity{T,U}},x::NonSIQuantity{T,U}) = x
 convert{T,S,U1,U2}(::Type{NonSIQuantity{T,U1}},x::NonSIQuantity{S,U2}) = NonSIQuantity{T,U2}(convert(T,x.val))
