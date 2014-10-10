@@ -22,7 +22,7 @@ module SIUnits
         val::R
     end
 
-    typealias UnitTuple NTuple{7,Int64}
+    typealias UnitTuple NTuple{7,Int}
 
     unit{T,m,kg,s,A,K,mol,cd}(x::SIRanges{T,m,kg,s,A,K,mol,cd}) = SIUnit{m,kg,s,A,K,mol,cd}()
     quantity{T,m,kg,s,A,K,mol,cd}(x::SIRanges{T,m,kg,s,A,K,mol,cd}) = SIQuantity{T,m,kg,s,A,K,mol,cd}
