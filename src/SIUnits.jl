@@ -45,6 +45,7 @@ module SIUnits
     end
     show{T<:UnitRange}(io::IO, r::SIRange{T}) = print(io, first(r),':',last(r))
     getindex(r::SIRanges,i::Integer) = (quantity(r)(getindex(r.val,i)))
+    getindex{T<:SIRanges}(r::T,i::Range) = T(getindex(r.val,i))
     function next(r::SIRanges, i) 
         v, j = next(r.val,i)
         to_q(quantity(r),v), j
