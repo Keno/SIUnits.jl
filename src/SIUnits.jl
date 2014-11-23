@@ -369,14 +369,18 @@ module SIUnits
         error("Unexpected Chatacter")
     end
 
+    function spacing(idx::Int, x::SIUnit)
+        # Only print a space if there are nonzero units coming after this one
+        tup(x)[idx+1:end] == ntuple(7-idx, (i)->0) ? "" : " "
+    end
     function show{m,kg,s,A,K,mol,cd}(io::IO,x::SIUnit{m,kg,s,A,K,mol,cd})
-        kg  != 0 && print(io, "kg",  (kg  == 1 ? " " : superscript(kg)))
-        m   != 0 && print(io, "m",   (m   == 1 ? " " : superscript(m)))
-        s   != 0 && print(io, "s",   (s   == 1 ? " " : superscript(s)))
-        A   != 0 && print(io, "A",   (A   == 1 ? " " : superscript(A)))
-        K   != 0 && print(io, "K",   (K   == 1 ? " " : superscript(K)))
-        mol != 0 && print(io, "mol", (mol == 1 ? " " : superscript(mol)))
-        cd  != 0 && print(io, "cd",  (cd  == 1 ? " " : superscript(cd)))
+        kg  != 0 && print(io, "kg",  (kg  == 1 ? spacing(1,x) : superscript(kg)))
+        m   != 0 && print(io, "m",   (m   == 1 ? spacing(2,x) : superscript(m)))
+        s   != 0 && print(io, "s",   (s   == 1 ? spacing(3,x) : superscript(s)))
+        A   != 0 && print(io, "A",   (A   == 1 ? spacing(4,x) : superscript(A)))
+        K   != 0 && print(io, "K",   (K   == 1 ? spacing(5,x) : superscript(K)))
+        mol != 0 && print(io, "mol", (mol == 1 ? spacing(6,x) : superscript(mol)))
+        cd  != 0 && print(io, "cd",  (cd  == 1 ? ""           : superscript(cd)))
     end
 
     function show{T,m,kg,s,A,K,mol,cd}(io::IO,x::SIQuantity{T,m,kg,s,A,K,mol,cd})
