@@ -139,3 +139,10 @@ a = SIUnits.UnitQuantity{Float64}(3.0)
 
 # Issue #52
 @test show(IOBuffer(), 1*Meter) == nothing
+
+# Test angular units
+@test 1rad + 2rad == 3rad
+for func in (sin,cos,tan,cot,sec,csc)
+    @test func(1.23rad) == func(1.23)
+    @test_approx_eq func(1.23deg) func(as(1.23deg,rad))
+end
