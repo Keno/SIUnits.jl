@@ -284,6 +284,11 @@ module SIUnits
         SIQuantity{typeof(val),m,kg,s,A,K,mol,cd,rad}(val)
     end
 
+    import Base: sin, cos, tan, cot, sec, csc
+    for func in (:sin,:cos,:tan,:cot,:sec,:csc)
+        @eval $func{T}(θ::SIQuantity{T,0,0,0,0,0,0,0,1}) = $func(θ.val)
+    end
+
     # Forwarding methods that do not affect units
     import Base: conj
     conj(x::SIQuantity) = typeof(x)(conj(x.val))
