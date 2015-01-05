@@ -224,6 +224,7 @@ module SIUnits
     ==(x::SIQuantity,y::SIQuantity) = (tup(x) == tup(y)) && (x.val == y.val)
     =={T}(x::SIQuantity{T},y::SIUnit) = (tup(x) == tup(y)) && (x.val == one(T))
     =={T}(x::SIUnit,y::SIQuantity{T}) = (tup(x) == tup(y)) && (one(T) == y.val)
+    ==(x::SIUnit,y::SIUnit) = tup(x) == tup(y)
 
     import Base: sqrt, abs, colon, isless, isfinite, isreal, real, imag, isnan
 
