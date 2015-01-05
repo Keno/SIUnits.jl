@@ -133,3 +133,6 @@ a = SIUnits.UnitQuantity{Float64}(3.0)
 @test ([1s]*(1.0s))[1] == 1s*s
 @test ([1.0s]*(1s))[1] == 1s*s
 @test ([1.0s]*(1.0s))[1] == 1s*s
+
+# Issue #49
+@test m != kg != s != A != K != mol != cd
