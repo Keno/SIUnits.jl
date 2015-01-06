@@ -383,6 +383,7 @@ module SIUnits
         K   != 0 && print(io, "K",   (K   == 1 ? spacing(5,x) : superscript(K)))
         mol != 0 && print(io, "mol", (mol == 1 ? spacing(6,x) : superscript(mol)))
         cd  != 0 && print(io, "cd",  (cd  == 1 ? ""           : superscript(cd)))
+        nothing
     end
 
     function show{T,m,kg,s,A,K,mol,cd}(io::IO,x::SIQuantity{T,m,kg,s,A,K,mol,cd})

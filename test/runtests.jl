@@ -136,3 +136,6 @@ a = SIUnits.UnitQuantity{Float64}(3.0)
 
 # Issue #49
 @test m != kg != s != A != K != mol != cd
+
+# Issue #52
+@test show(IOBuffer(), 1*Meter) == nothing
