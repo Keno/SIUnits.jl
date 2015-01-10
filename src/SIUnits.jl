@@ -376,6 +376,25 @@ module SIUnits
         tup(x)[idx+1:end] == ntuple(7-idx, (i)->0) ? "" : " "
     end
     function show{m,kg,s,A,K,mol,cd}(io::IO,x::SIUnit{m,kg,s,A,K,mol,cd})
+        units = [
+          (Joule, "J"),
+          (Coulomb, "C"),
+          (Volt, "V"),
+          (Farad, "F"),
+          (Newton, "N"),
+          (Ohm, "Ω"),
+          (Hertz, "Hz"),
+          (Siemens, "S"),
+          (Watt, "W"),
+          (Pascal, "Pa")
+        ]
+        for (unit, symbol) = units
+          if unit == x
+            print(io, symbol)
+            return
+          end
+        end
+
         kg  != 0 && print(io, "kg",  (kg  == 1 ? spacing(1,x) : superscript(kg)))
         m   != 0 && print(io, "m",   (m   == 1 ? spacing(2,x) : superscript(m)))
         s   != 0 && print(io, "s",   (s   == 1 ? spacing(3,x) : superscript(s)))
