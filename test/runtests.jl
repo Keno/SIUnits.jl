@@ -12,8 +12,16 @@ else
     end
 end
 
+# Test types
+
+for x in (1,float32(1.0),float64(1.0),complex(1.0,0.0))
+    @test typeof(x*Meter) == quantity(typeof(x),Meter)
+    @test SIUnits.unit(x*Meter) == Meter
+end
 
 # Basic arithmetic things
+@test V*5 == 5*V
+@test -(1V) == (-1)V
 @test 1V + 2V == 3V
 @test (1//2)V - 1V == (-1//2)V
 @test_throws_compat ErrorException 1//2V - 1V
@@ -44,6 +52,10 @@ OneNewton = 1*(kg*m/s^2)
 
 @test 1Hz*1s == 1
 @test 1s/(1s) == 1
+
+@test (1.23V)^0 == one(1.23)
+@test (1.23V)^(0//1) == one(1.23)
+@test (1.23V)^(0s/(1s)) == one(1.23)
 
 # Issue #2
 
@@ -93,7 +105,16 @@ r1 = 1Hz:5Hz
 
 # Others
 
+@test isnan(1.23K) == false
+@test isnan(NaN*K) == true
+@test isreal(1.23K) == true
+@test isreal(1.23im*K) == false
+@test real(1.0K + 2.0im*K) == 1.0K
+@test imag(1.0K + 2.0im*K) == 2.0K
+@test conj(1.0K + 2.0im*K) == 1.0K - 2.0im*K
+
 @test mod(2µm,4µm) == 2µm
+@test_throws_compat ErrorException mod(3kg,4s)
 
 # Issue #9
 a = [1m 2N]
@@ -135,7 +156,7 @@ a = SIUnits.UnitQuantity{Float64}(3.0)
 @test ([1.0s]*(1.0s))[1] == 1s*s
 
 # Issue #49
-@test m != kg != s != A != K != mol != cd
+@test m != kg != s != A != K != mol != rad != sr
 
 # Issue #52
 @test show(IOBuffer(), 1*Meter) == nothing
