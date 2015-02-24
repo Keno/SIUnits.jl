@@ -1,7 +1,7 @@
-# Small (currently handmaintained) list of abbreviations for units in commonly found order 
+# Small (currently handmaintained) list of abbreviations for units in commonly-found orders 
 # of magnitude. There's a delicate balance to be struck between polluting the namespace
-# and being useful. We might in ther future give up and just generate all the orders of
-# maginuted for everything
+# and being useful. We might in the future give up and just generate all the orders of
+# magnitude for everything.
 module ShortUnits
     export µg, mg, g, kg, µm, mm, cm, m, km, mJ, J, MJ, HJ, fF, pF, nF, µF, mF,
         F, pΩ, nΩ, µΩ, mΩ, Ω, kΩ, MΩ, mV, V, MV, mHz, Hz, MHz, GHz, THz, fA, pA, 
