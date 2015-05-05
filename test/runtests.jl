@@ -12,9 +12,13 @@ else
     end
 end
 
+if VERSION <= v"0.4.0-dev+3338"
+    const AssertionError = ErrorException
+end
+
 # Test types
 
-for x in (1,float32(1.0),float64(1.0),complex(1.0,0.0))
+for x in (1,1.0f0,1.0,complex(1.0,0.0))
     @test typeof(x*Meter) == quantity(typeof(x),Meter)
     @test SIUnits.unit(x*Meter) == Meter
 end
@@ -81,7 +85,7 @@ end
 
 # Interaction of si and non-si units
 @test (1mm)^2*1torr == as(1torr,Pascal)*(1mm)^2
-@test_throws_compat ErrorException as(1torr,s)
+@test_throws_compat AssertionError as(1torr,s)
 
 # Ranges (#4)
 r1 = 1Hz:5Hz
