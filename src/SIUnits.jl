@@ -380,7 +380,7 @@ module SIUnits
 
     function spacing(idx::Int, x::SIUnit)
         # Only print a space if there are nonzero units coming after this one
-        tup(x)[idx+1:end] == ntuple(9-idx, (i)->0) ? "" : " "
+        tup(x)[idx+1:end] == ntuple((i)->0, 9-idx) ? "" : " "
     end
     function show{m,kg,s,A,K,mol,cd,rad,sr}(io::IO,x::SIUnit{m,kg,s,A,K,mol,cd,rad,sr})
         kg  != 0 && print(io, "kg",  (kg  == 1 ? spacing(1,x) : superscript(kg)))
