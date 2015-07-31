@@ -115,8 +115,8 @@ module SIUnits
         A::Type{SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}},B::Type{SIUnit{mS,kgS,sS,AS,KS,molS,cdS,radS,srS}}) = SIQuantity{T}
     promote_rule{S,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{Bool},y::Type{SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{promote_type(Bool,S)}
     promote_rule{m,kg,s,A,K,mol,cd,rad,sr}(x::Type{Bool},y::Type{SIUnit{m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{Bool}
-    promote_rule{T,S,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{T},y::Type{SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{promote_type(T,S)}
-    promote_rule{T,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{T},y::Type{SIUnit{m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{T}
+    promote_rule{T<:Number,S,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{T},y::Type{SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{promote_type(T,S)}
+    promote_rule{T<:Number,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{T},y::Type{SIUnit{m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{T}
 
     # One unspecified, units, one concrete (unspecified occurs as the promotion result from the rules above)
     promote_rule{T,S,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{SIQuantity{T}},y::Type{SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{promote_type(T,S)}
@@ -472,22 +472,22 @@ end
 # Non-SI promote rules
 promote_rule(x::Type{MathConst},y::Type{NonSIUnit}) =
     NonSIQuantity{x,y}
-promote_rule{sym,T,Unit}(x::Type{MathConst{sym}},y::Type{NonSIQuantity{T,Unit}}) =
+promote_rule{sym,T<:Number,Unit}(x::Type{MathConst{sym}},y::Type{NonSIQuantity{T,Unit}}) =
     NonSIQuantity{promote_type(MathConst{sym},T),Unit}
 
-promote_rule{T,S,U1,U2}(
+promote_rule{T<:Number,S<:Number,U1,U2}(
     A::Type{NonSIQuantity{T,U1}},B::Type{SIQuantity{S,U2}}) = NonSIQuantity{promote_type(T,S)}
-promote_rule{T,U1}(
+promote_rule{T<:Number,U1}(
     A::Type{NonSIQuantity{T,U1}},U2::Type{NonSIUnit}) = NonSIQuantity{T}
-promote_rule{S,U}(x::Type{Bool},y::Type{NonSIQuantity{S,U}}) = NonSIQuantity{promote_type(Bool,S),U}
+promote_rule{S<:Number,U}(x::Type{Bool},y::Type{NonSIQuantity{S,U}}) = NonSIQuantity{promote_type(Bool,S),U}
 promote_rule(x::Type{Bool},U::Type{NonSIUnit}) = NonSIQuantity{Bool,U}
-promote_rule{T,S,U}(x::Type{T},y::Type{NonSIQuantity{S,U}}) = NonSIQuantity{promote_type(T,S),U}
-promote_rule{T}(x::Type{T},U::Type{NonSIUnit}) = NonSIQuantity{T,U}
+promote_rule{T<:Number,S<:Number,U}(x::Type{T},y::Type{NonSIQuantity{S,U}}) = NonSIQuantity{promote_type(T,S),U}
+promote_rule{T<:Number}(x::Type{T},U::Type{NonSIUnit}) = NonSIQuantity{T,U}
 
 # Interaction between SI and non-SI quantities
-promote_rule{S,T,U,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{NonSIQuantity{S,U}},y::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}) =
+promote_rule{S<:Number,T<:Number,U,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{NonSIQuantity{S,U}},y::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}) =
     SIQuantity{promote_type(S,T)}
-promote_rule{S,T,U,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}},y::Type{NonSIQuantity{S,U}}) =
+promote_rule{S<:Number,T<:Number,U,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}},y::Type{NonSIQuantity{S,U}}) =
     SIQuantity{promote_type(S,T)}
 
 siquantity{B}(T,U::NonSIUnit{B}) = quantity(T,B())
