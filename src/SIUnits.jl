@@ -1,5 +1,8 @@
 module SIUnits
 
+    import Base: ==, +, -, *, /, .+, .-, .*, ./, //, ^
+    import Base: promote_rule, promote_type, convert, show, mod
+
     immutable SIQuantity{T<:Number,m,kg,s,A,K,mol,cd,rad,sr} <: Number
         val::T
     end
@@ -83,8 +86,6 @@ module SIUnits
                 $(op)(tup1[6],tup2[6]),$(op)(tup1[7],tup2[7]),$(op)(tup1[8],tup2[8]),$(op)(tup1[9],tup2[9]))
         end
     end
-
-    import Base: +, -, *, /, //, ^, promote_rule, promote_type, convert, show, ==, mod
 
     export quantity, @quantity
 
