@@ -130,11 +130,11 @@ module SIUnits
             convert{T}(::Type{SIQuantity{T}},x::Dates.Period) = error("Conversion from Period to SIQuantity not defined")
         end)
     end
-    convert{T,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T}},x::SIUnit{m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(one(T))
-    convert{T}(::Type{SIQuantity{T}},x::T) = UnitQuantity{T}(x)
-    convert{T,S}(::Type{SIQuantity{T}},x::S) = convert(SIQuantity{T},convert(T,x))
-    convert{T}(::Type{SIQuantity{T}},x::SIQuantity{T}) = x
-    convert{T,S,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T}},x::SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(convert(T,x.val))
+    convert{T<:Number,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T}},x::SIUnit{m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(one(T))
+    convert{T<:Number}(::Type{SIQuantity{T}},x::T) = UnitQuantity{T}(x)
+    convert{T<:Number,S<:Number}(::Type{SIQuantity{T}},x::S) = convert(SIQuantity{T},convert(T,x))
+    convert{T<:Number}(::Type{SIQuantity{T}},x::SIQuantity{T}) = x
+    convert{T<:Number,S,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T}},x::SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(convert(T,x.val))
 
     to_q{T,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}},val::T) = (0 == m == kg == s == A == K == mol == cd == rad == sr) ? val : SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(val)
     convert{T,S,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}},val::S) = (SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(convert(T,val)))
@@ -464,7 +464,7 @@ module SIUnits
 
 # Non-SI Units
 immutable NonSIUnit{BaseUnit<:SIUnit,Unit}; end
-immutable NonSIQuantity{T,Unit<:NonSIUnit} <: Number
+immutable NonSIQuantity{T<:Number,Unit<:NonSIUnit} <: Number
     val::T
 end
 
@@ -533,10 +533,10 @@ end
 # on the type out of promotion, hence the first method, but we still need the second method
 # to be more specific that the convert methods of plain SIUnits above.
 convert(::Type{SIQuantity},x::NonSIQuantity) = x.val * convert(SIQuantity,unit(x))
-convert{T}(::Type{SIQuantity{T}},x::NonSIQuantity) = x.val * convert(SIQuantity,unit(x))
+convert{T<:Number}(::Type{SIQuantity{T}},x::NonSIQuantity) = x.val * convert(SIQuantity,unit(x))
 
 convert{T}(::Type{NonSIQuantity{T}},U::NonSIUnit) = NonSIQuantity{T,U}(one(T))
-convert{T,U}(::Type{NonSIQuantity{T,U}},x::T) = UnitQuantity{T}(x)
+convert{T<:Number,U}(::Type{NonSIQuantity{T,U}},x::T) = UnitQuantity{T}(x)
 #convert{T}(::Type{NonSIQuantity{T}},x::T) = UnitQuantity{T}(x)
 #convert{T,S}(::Type{NonSIQuantity{T}},x::S) = convert(NonSIQuantity{T},convert(T,x))
 if VERSION >= v"0.4-dev"
@@ -546,7 +546,7 @@ if VERSION >= v"0.4-dev"
 end
 convert{T,U,S}(::Type{NonSIQuantity{T,U}},x::S) = convert(NonSIQuantity{T,U},convert(T,x))
 convert{T,U}(::Type{NonSIQuantity{T,U}},x::NonSIQuantity{T,U}) = x
-convert{T,S,U1,U2}(::Type{NonSIQuantity{T,U1}},x::NonSIQuantity{S,U2}) = NonSIQuantity{T,U2}(convert(T,x.val))
+convert{T<:Number,S,U1,U2}(::Type{NonSIQuantity{T,U1}},x::NonSIQuantity{S,U2}) = NonSIQuantity{T,U2}(convert(T,x.val))
 
 export as
 
