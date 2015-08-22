@@ -138,7 +138,7 @@ module SIUnits
     convert{T<:Number,S,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T}},x::SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(convert(T,x.val))
 
     to_q{T,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}},val::T) = (0 == m == kg == s == A == K == mol == cd == rad == sr) ? val : SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(val)
-    convert{T,S,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}},val::S) = (SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(convert(T,val)))
+    convert{T,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}},val::Number) = (SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(convert(T,val)))
     function convert{T,S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(::Type{SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}},val::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS})
         if mS != mT || kgS != kgT || sS != sT || AS != AT || KS != KT || molS != molT || cdS != cdT || radS != radT || srS != srT
             error("Dimension mismatch in convert. Attempted to convert a ($(repr(SIUnit{mS,kgS,sS,AS,KS,molS,cdS,radS,srS}))) to ($(repr(SIUnit{mT,kgT,sT,AT,KT,molT,cdT,radT,srT})))")
@@ -545,7 +545,7 @@ if VERSION >= v"0.4-dev"
         convert{T,U}(::Type{NonSIQuantity{T,U}},x::Dates.Period) = error("Conversion from Period to NonSIQuantity not defined")
     end)
 end
-convert{T,U,S}(::Type{NonSIQuantity{T,U}},x::S) = convert(NonSIQuantity{T,U},convert(T,x))
+convert{T,U}(::Type{NonSIQuantity{T,U}},x::Number) = convert(NonSIQuantity{T,U},convert(T,x))
 convert{T,U}(::Type{NonSIQuantity{T,U}},x::NonSIQuantity{T,U}) = x
 convert{T<:Number,S,U1,U2}(::Type{NonSIQuantity{T,U1}},x::NonSIQuantity{S,U2}) = NonSIQuantity{T,U2}(convert(T,x.val))
 
