@@ -3,8 +3,11 @@
 [![Build Status](https://travis-ci.org/Keno/SIUnits.jl.svg?branch=master)](https://travis-ci.org/Keno/SIUnits.jl)
 [![Coverage Status](https://img.shields.io/coveralls/Keno/SIUnits.jl.svg)](https://coveralls.io/r/Keno/SIUnits.jl)
 
+[![SIUnits](http://pkg.julialang.org/badges/SIUnits_0.3.svg)](http://pkg.julialang.org/?pkg=SIUnits&ver=0.3)
+[![SIUnits](http://pkg.julialang.org/badges/SIUnits_0.4.svg)](http://pkg.julialang.org/?pkg=SIUnits&ver=0.4)
+
 This package provides efficient unit-checked computations based for units in the
-SIUnits systems. To use this package use (after installing it using Pkg.add)
+SIUnits systems. To use this package use (after installing it using `Pkg.add`)
 ```
 using SIUnits
 ```
