@@ -495,7 +495,7 @@ siquantity{B}(T,U::Type{NonSIUnit{B}}) = quantity(T,B())
 #convert{T,S,U}(::Type{SIQuantity{T}},x::NonSIQuantity{S,U}) = (siquantity(promote_type(T,S),U())(x.val))
 
 
-*{T<:NonSIUnit}(x,t::T) = NonSIQuantity{typeof(x),T}(x)
+*{T<:NonSIUnit}(x::Union(Number, AbstractArray),t::T) = NonSIQuantity{typeof(x),T}(x)
 
 baseunit{BaseUnit}(x::NonSIUnit{BaseUnit}) = BaseUnit()
 baseunit{T,Unit}(x::NonSIQuantity{T,Unit}) = baseunit(unit(x))
