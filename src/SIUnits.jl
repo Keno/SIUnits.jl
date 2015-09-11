@@ -264,10 +264,10 @@ module SIUnits
     function isless{T,S}(x::SIQuantity{T,0,0,0,0,0,0,0,0,0}, y::SIQuantity{S,0,0,0,0,0,0,0,0,0})
         return isless(x.val,y.val)
     end
-    function isless{T}(x::SIQuantity{T,0,0,0,0,0,0,0,0,0}, y::Number)
+    function isless{T}(x::SIQuantity{T,0,0,0,0,0,0,0,0,0}, y::Real)
         return isless(x.val,y)
     end
-    function isless{T}(x::Number, y::SIQuantity{T,0,0,0,0,0,0,0,0,0})
+    function isless{T}(x::Real, y::SIQuantity{T,0,0,0,0,0,0,0,0,0})
         return isless(x,y.val)
     end
     function isless{T,S,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(
@@ -495,7 +495,7 @@ siquantity{B}(T,U::Type{NonSIUnit{B}}) = quantity(T,B())
 #convert{T,S,U}(::Type{SIQuantity{T}},x::NonSIQuantity{S,U}) = (siquantity(promote_type(T,S),U())(x.val))
 
 
-*{T<:NonSIUnit}(x,t::T) = NonSIQuantity{typeof(x),T}(x)
+*{T<:NonSIUnit}(x::Number,t::T) = NonSIQuantity{typeof(x),T}(x)
 
 baseunit{BaseUnit}(x::NonSIUnit{BaseUnit}) = BaseUnit()
 baseunit{T,Unit}(x::NonSIQuantity{T,Unit}) = baseunit(unit(x))
