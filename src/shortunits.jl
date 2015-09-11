@@ -1,11 +1,11 @@
-# Small (currently handmaintained) list of abbreviations for units in commonly-found orders 
+# Small (currently handmaintained) list of abbreviations for units in commonly-found orders
 # of magnitude. There's a delicate balance to be struck between polluting the namespace
 # and being useful. We might in the future give up and just generate all the orders of
 # magnitude for everything.
 module ShortUnits
     export µg, mg, g, kg, µm, mm, cm, m, km, mJ, J, MJ, HJ, fF, pF, nF, µF, mF,
-        F, pΩ, nΩ, µΩ, mΩ, Ω, kΩ, MΩ, mV, V, MV, mHz, Hz, MHz, GHz, THz, fA, pA, 
-        nA, µA, mA, A, C, N, mol, ns, ms, µs, s, S, nW, µW, mW, W, MW, GW, eV, 
+        F, pΩ, nΩ, µΩ, mΩ, Ω, kΩ, MΩ, mV, V, MV, mHz, Hz, kHz, MHz, GHz, THz, fA, pA,
+        nA, µA, mA, A, C, N, mol, ns, ms, µs, s, S, nW, µW, mW, W, MW, GW, eV,
         K, mPa, Pa, kPa, MPa, GPa, nm, torr, mtorr, atm, rad, deg, sr
 
     using SIUnits
@@ -40,10 +40,10 @@ module ShortUnits
     const mΩ    = Milli*Ohm
     const Ω     = Ohm
     const kΩ    = Kilo*Ohm
-    const MΩ    = Mega*Ohm   
+    const MΩ    = Mega*Ohm
 
     const mV    = Milli*Volt
-    const V     = Volt 
+    const V     = Volt
     const MV    = Mega*Volt
 
     const ns    = Nano*Second
@@ -55,6 +55,7 @@ module ShortUnits
 
     const mHz   = Milli*Hertz
     const Hz    = Hertz
+    const kHz   = Kilo*Hertz
     const MHz   = Mega*Hertz
     const GHz   = Giga*Hertz
     const THz   = Tera*Hertz
