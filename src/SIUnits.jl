@@ -105,11 +105,11 @@ module SIUnits
         esc(:(SIUnits.SIQuantity{$expr,SIUnits.tup($unit)...}))
     end
 
-    # MathConsts propagate through units. Fancy!!
-    promote_rule{sym,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{MathConst{sym}},y::Type{SIUnit{m,kg,s,A,K,mol,cd,rad,sr}}) =
-        SIQuantity{MathConst{sym},m,kg,s,A,K,mol,cd,rad,sr}
-    promote_rule{sym,T,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{MathConst{sym}},y::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}) =
-        SIQuantity{promote_type(MathConst{sym},T)}
+    # Irrationals propagate through units. Fancy!!
+    promote_rule{sym,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{Irrational{sym}},y::Type{SIUnit{m,kg,s,A,K,mol,cd,rad,sr}}) =
+        SIQuantity{Irrational{sym},m,kg,s,A,K,mol,cd,rad,sr}
+    promote_rule{sym,T,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{Irrational{sym}},y::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}) =
+        SIQuantity{promote_type(Irrational{sym},T)}
 
     promote_rule{T,S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(
         A::Type{SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}},B::Type{SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS}}) = SIQuantity{promote_type(T,S)}
@@ -215,7 +215,7 @@ module SIUnits
         convert(Int,K*r),convert(Int,mol*r),convert(Int,cd*r),convert(Int,rad*r),convert(Int,sr*r)}(val)
     end
 
-    ^{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr},r::FloatingPoint) = x^rationalize(r)
+    ^{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr},r::AbstractFloat) = x^rationalize(r)
 
     function ^{T,S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(
         x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS})
@@ -303,7 +303,7 @@ module SIUnits
     *(x::SIUnit,y::SIUnit) = tup2u(tup(x)+tup(y))()
     *{T}(x::SIUnit,y::SIQuantity{T}) = to_q(quantity(T,tup(y)+tup(x)),y.val)
     *{T}(x::SIQuantity{T},y::SIUnit) = to_q(quantity(T,tup(y)+tup(x)),x.val)
-    *(x::MathConst,y::SIUnit) = quantity(typeof(x),y)(x)
+    *(x::Irrational,y::SIUnit) = quantity(typeof(x),y)(x)
     function *(x::SIQuantity,y::SIQuantity)
         ret = x.val * y.val
         to_q(quantity(typeof(ret),tup(x)+tup(y)),ret)
@@ -472,10 +472,10 @@ immutable NonSIQuantity{T<:Number,Unit<:NonSIUnit} <: Number
 end
 
 # Non-SI promote rules
-promote_rule(x::Type{MathConst},y::Type{NonSIUnit}) =
+promote_rule(x::Type{Irrational},y::Type{NonSIUnit}) =
     NonSIQuantity{x,y}
-promote_rule{sym,T<:Number,Unit}(x::Type{MathConst{sym}},y::Type{NonSIQuantity{T,Unit}}) =
-    NonSIQuantity{promote_type(MathConst{sym},T),Unit}
+promote_rule{sym,T<:Number,Unit}(x::Type{Irrational{sym}},y::Type{NonSIQuantity{T,Unit}}) =
+    NonSIQuantity{promote_type(Irrational{sym},T),Unit}
 
 promote_rule{T<:Number,S<:Number,U1,U2}(
     A::Type{NonSIQuantity{T,U1}},B::Type{SIQuantity{S,U2}}) = NonSIQuantity{promote_type(T,S)}

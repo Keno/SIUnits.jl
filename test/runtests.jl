@@ -136,7 +136,7 @@ bu=[2N 3N 4N]
 @test au*bu' == bu*au'
 @test (au*bu')[1] == dot(vec(au),vec(bu))
 
-# MathConsts
+# Irrationals
 @test (3pi)*m == 3*(pi*m)
 a = 1m
 b = 2mm
