@@ -2,6 +2,8 @@ isdefined(Base, :__precompile__) && __precompile__()
 
 module SIUnits
 
+    using Compat
+
     import Base: ==, +, -, *, /, .+, .-, .*, ./, //, ^
     import Base: promote_rule, promote_type, convert, show, mod
 
