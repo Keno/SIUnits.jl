@@ -97,7 +97,7 @@ module SIUnits
         quant.val == one(S) || error("Quantity value must be unity!")
         quantity(T,unit(quant))
     end
-    quantity{m,kg,s,A,K,mol,cd,rad,sr}(T::Union(Type,TypeVar),unit::SIUnit{m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}
+    quantity{m,kg,s,A,K,mol,cd,rad,sr}(T::(@compat Union{Type,TypeVar}),unit::SIUnit{m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}
 
     tup{m,kg,s,A,K,mol,cd,rad,sr}(u::SIUnit{m,kg,s,A,K,mol,cd,rad,sr}) = (m,kg,s,A,K,mol,cd,rad,sr)
     tup{T,m,kg,s,A,K,mol,cd,rad,sr}(u::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}) = (m,kg,s,A,K,mol,cd,rad,sr)
@@ -504,8 +504,8 @@ siquantity{B}(T,U::Type{NonSIUnit{B}}) = quantity(T,B())
 baseunit{BaseUnit}(x::NonSIUnit{BaseUnit}) = BaseUnit()
 baseunit{T,Unit}(x::NonSIQuantity{T,Unit}) = baseunit(unit(x))
 unit{T,Unit}(x::NonSIQuantity{T,Unit}) = Unit()
-quantity(T::Union(Type,TypeVar),x::NonSIUnit) = NonSIQuantity{T,typeof(x)}
-quantity(T::Union(Type,TypeVar),U::Type{NonSIUnit}) = NonSIQuantity{T,U}
+quantity(T::(@compat Union{Type,TypeVar}),x::NonSIUnit) = NonSIQuantity{T,typeof(x)}
+quantity(T::(@compat Union{Type,TypeVar}),U::Type{NonSIUnit}) = NonSIQuantity{T,U}
 
 /{T,U}(x::NonSIQuantity{T,U},y::SIQuantity) = convert(SIQuantity,x)/y
 /(x::NonSIUnit,y::SIUnit) = convert(SIQuantity,x)/y
@@ -515,7 +515,7 @@ quantity(T::Union(Type,TypeVar),U::Type{NonSIUnit}) = NonSIQuantity{T,U}
 /(x::NonSIUnit,y::SIQuantity) = convert(SIQuantity,x)/y
 -{T,U}(x::NonSIQuantity{T,U}) = NonSIQuantity{T,U}(-x.val)
 
-^(x::Union(NonSIQuantity,NonSIUnit),i::Integer) = convert(SIQuantity,x)^i
+^(x::(@compat Union{NonSIQuantity,NonSIUnit}),i::Integer) = convert(SIQuantity,x)^i
 
 show{BaseUnit,Unit}(io::IO,x::NonSIUnit{BaseUnit,Unit}) = write(io,string(Unit))
 function show(io::IO,x::NonSIQuantity)
