@@ -103,4 +103,13 @@ module ShortUnits
     const deg   = Degree
     const sr    = Steradian
 
+    # Support the other unicode codepoint for $\mu$
+    # (namely the one we get on the REPL)
+    export μg, μm, μF, μA, μW
+    const μg = µg
+    const μm = µm
+    const μF = µF
+    const μA = µA
+    const μW = µW
+
 end
