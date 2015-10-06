@@ -6,7 +6,8 @@ module ShortUnits
     export µg, mg, g, kg, µm, mm, cm, m, km, mJ, J, MJ, HJ, fF, pF, nF, µF, mF,
         F, pΩ, nΩ, µΩ, mΩ, Ω, kΩ, MΩ, mV, V, MV, mHz, Hz, kHz, MHz, GHz, THz, fA, pA,
         nA, µA, mA, A, C, N, mol, ns, ms, µs, s, S, nW, µW, mW, W, MW, GW, eV,
-        K, mPa, Pa, kPa, MPa, GPa, nm, torr, mtorr, atm, rad, deg, sr
+        K, mPa, Pa, kPa, MPa, GPa, nm, torr, mtorr, atm, rad, deg, sr,
+        MeV, GeV, TeV
 
     using SIUnits
 
@@ -89,6 +90,9 @@ module ShortUnits
     const K     = Kelvin
 
     const eV    = ElectronVolt
+    const MeV   = Mega*ElectronVolt
+    const GeV   = Giga*ElectronVolt
+    const TeV   = Tera*ElectronVolt
 
     const torr  = Torr
     const mtorr = Milli*Torr
@@ -98,4 +102,5 @@ module ShortUnits
     const rad   = Radian
     const deg   = Degree
     const sr    = Steradian
+
 end
