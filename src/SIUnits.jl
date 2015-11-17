@@ -94,13 +94,6 @@ module SIUnits
     tup2u(tup) = SIUnit{tup}
     quantity(T::Type,tup::UnitTuple) = quantity(T,tup2u(tup)())
 
-    # for op in (:-,:*,:+)
-    #     @eval function $(op)(tup1::UnitTuple,tup2::UnitTuple)
-    #         ($(op)(tup1[1],tup2[1]),$(op)(tup1[2],tup2[2]),$(op)(tup1[3],tup2[3]),$(op)(tup1[4],tup2[4]),$(op)(tup1[5],tup2[5]),
-    #             $(op)(tup1[6],tup2[6]),$(op)(tup1[7],tup2[7]),$(op)(tup1[8],tup2[8]),$(op)(tup1[9],tup2[9]))
-    #     end
-    # end
-
     export quantity, @quantity
 
     function quantity{S}(T,quant::SIQuantity{S})
