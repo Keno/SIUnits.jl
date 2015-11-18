@@ -435,6 +435,7 @@ module SIUnits
     function Base.Multimedia.writemime{Tup}(io::IO,::MIME"text/mathtex+latex",x::SIUnit{Tup})
         num = ASCIIString[]
         den = ASCIIString[]
+        kg,m,s,A,K,mol,cd,rad,sr = Tup
         @l kg
         @l m
         @l s
