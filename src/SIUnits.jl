@@ -7,15 +7,28 @@ module SIUnits
     import Base: ==, +, -, *, /, .+, .-, .*, ./, //, ^
     import Base: promote_rule, promote_type, convert, show, mod
 
-    immutable SIQuantity{T<:Number,m,kg,s,A,K,mol,cd,rad,sr} <: Number
+    typealias UnitTuple NTuple{9,Int64}
+    const EmptyTuple = (0,0,0,0,0,0,0,0,0)
+
+    #Basic UnitTuple Operations
+    +(xs::UnitTuple,ys::UnitTuple) = tuple([x+y for (x,y) in zip(xs,ys)]...)
+    -(xs::UnitTuple,ys::UnitTuple) = tuple([x-y for (x,y) in zip(xs,ys)]...)
+    -(xs::UnitTuple) = tuple([-x for x in xs]...)
+    *(x::Integer,ys::UnitTuple) = tuple([x*y for y in ys]...)
+    *(xs::UnitTuple,y::Integer) = tuple([x*y for x in xs]...)
+    *{I<:Integer}(x::Rational{I},ys::UnitTuple) = tuple([convert(Int64,x*y) for y in ys]...)
+    *{I<:Integer}(xs::UnitTuple,y::Rational{I}) = tuple([convert(Int64,x*y) for x in xs]...)
+    /(xs::UnitTuple,y::Integer) = tuple([convert(Int64,x/y) for x in xs]...)
+
+    immutable SIQuantity{T<:Number,Tup} <: Number
         val::T
     end
 
-    typealias UnitQuantity{T} SIQuantity{T,0,0,0,0,0,0,0,0,0}
+    typealias UnitQuantity{T} SIQuantity{T,EmptyTuple}
 
     SIQuantity{T<:Number}(x::T) = UnitQuantity{T}(x)
 
-    immutable SIUnit{m,kg,s,A,K,mol,cd,rad,sr} <: Number
+    immutable SIUnit{Tup} <: Number
     end
 
     if !isdefined(Base, :UnitRange)
@@ -23,23 +36,21 @@ module SIUnits
         const UnitRange = Range1
     end
 
-    abstract SIRanges{T,m,kg,s,A,K,mol,cd,rad,sr} <: Range{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}
+    abstract SIRanges{T,Tup} <: Range{SIQuantity{T,Tup}}
 
-    immutable SIRange{R<:Range,T<:Real,m,kg,s,A,K,mol,cd,rad,sr} <: SIRanges{T,m,kg,s,A,K,mol,cd,rad,sr}
+    immutable SIRange{R<:Range,T<:Real,Tup} <: SIRanges{T,Tup}
         val::R
     end
 
-    typealias UnitTuple NTuple{9,Int}
-
-    unit{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIRanges{T,m,kg,s,A,K,mol,cd,rad,sr}) = SIUnit{m,kg,s,A,K,mol,cd,rad,sr}()
-    quantity{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIRanges{T,m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}
+    unit{T,Tup}(x::SIRanges{T,Tup}) = SIUnit{Tup}()
+    quantity{T,Tup}(x::SIRanges{T,Tup}) = SIQuantity{T,Tup}
 
     import Base: length, getindex, next, float64, float, int, show, start, step, last, done, first, eltype, one, zero
 
     one(x::SIQuantity) = one(x.val)
-    one{T,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}) = one(T)
+    one{T,Tup}(::Type{SIQuantity{T,Tup}}) = one(T)
     zero(x::SIQuantity) = zero(x.val) * unit(x)
-    zero{T,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}) = zero(T) * SIUnit{m,kg,s,A,K,mol,cd,rad,sr}()
+    zero{T,Tup}(::Type{SIQuantity{T,Tup}}) = zero(T) * SIUnit{Tup}()
 
     # This is all nessecary because SIQuanity{T<:Real} !<: Real
     show(io::IO, x::SIRanges) = (show(io, x.val); show(io,unit(x)))
@@ -66,10 +77,10 @@ module SIUnits
         @eval $(func)(r::SIRanges) = to_q(quantity(r),$(func)(r.val))
     end
     # Forward some linear range transformations to the wrapped range
-    rangequantity{R<:Range}(::Type{R},tup::UnitTuple) = SIRange{R,eltype(R),tup[1],tup[2],tup[3],tup[4],tup[5],tup[6],tup[7],tup[8],tup[9]}
+    rangequantity{R<:Range}(::Type{R},tup::UnitTuple) = SIRange{R,eltype(R),tup}
     for func in (VERSION < v"0.3-" ? (:+, :-) : (:.+, :.-)) # version 0.3 swaps fallbacks
-        @eval $(func){T,S,m,kg,s,A,K,mol,cd,rad,sr}(x::SIRanges{T,m,kg,s,A,K,mol,cd,rad,sr}, y::SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr}) = (val = $(func)(x.val, y.val); SIRange{typeof(val),eltype(val),m,kg,s,A,K,mol,cd,rad,sr}(val))
-        @eval $(func){T,S,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}, y::SIRanges{S,m,kg,s,A,K,mol,cd,rad,sr}) = (val = $(func)(x.val, y.val); SIRange{typeof(val),eltype(val),m,kg,s,A,K,mol,cd,rad,sr}(val))
+        @eval $(func){T,S,Tup}(x::SIRanges{T,Tup}, y::SIQuantity{S,Tup}) = (val = $(func)(x.val, y.val); SIRange{typeof(val),eltype(val),Tup}(val))
+        @eval $(func){T,S,Tup}(x::SIQuantity{T,Tup}, y::SIRanges{S,Tup}) = (val = $(func)(x.val, y.val); SIRange{typeof(val),eltype(val),Tup}(val))
     end
     ./(x::SIRanges, y::SIQuantity) = (val = ./(x.val, y.val); rangequantity(typeof(val),tup(x)-tup(y))(val))
     .*(x::SIRanges, y::SIQuantity) = (val = .*(x.val, y.val); rangequantity(typeof(val),tup(x)+tup(y))(val))
@@ -77,19 +88,11 @@ module SIUnits
     # Version 0.2 assumes all Ranges have start and len fields in ==, and
     # the fallback in 0.3 needlessly iterates through all values
     ==(r::SIRanges, s::SIRanges) = r.val == s.val && tup(r) == tup(s)
-    ==(s::SIRanges, r::Range) = s.val == r && tup(s) == (0,0,0,0,0,0,0,0,0)
-    ==(r::Range, s::SIRanges) = r == s.val && tup(s) == (0,0,0,0,0,0,0,0,0)
+    ==(s::SIRanges, r::Range) = s.val == r && tup(s) == EmptyTuple
+    ==(r::Range, s::SIRanges) = r == s.val && tup(s) == EmptyTuple
 
-    tup2u(tup) = SIUnit{tup[1],tup[2],tup[3],tup[4],tup[5],tup[6],tup[7],tup[8],tup[9]}
+    tup2u(tup) = SIUnit{tup}
     quantity(T::Type,tup::UnitTuple) = quantity(T,tup2u(tup)())
-    -(tup::UnitTuple) = (-tup[1],-tup[2],-tup[3],-tup[4],-tup[5],-tup[6],-tup[7],-tup[8],-tup[9])
-
-    for op in (:-,:*,:+)
-        @eval function $(op)(tup1::UnitTuple,tup2::UnitTuple)
-            ($(op)(tup1[1],tup2[1]),$(op)(tup1[2],tup2[2]),$(op)(tup1[3],tup2[3]),$(op)(tup1[4],tup2[4]),$(op)(tup1[5],tup2[5]),
-                $(op)(tup1[6],tup2[6]),$(op)(tup1[7],tup2[7]),$(op)(tup1[8],tup2[8]),$(op)(tup1[9],tup2[9]))
-        end
-    end
 
     export quantity, @quantity
 
@@ -97,57 +100,54 @@ module SIUnits
         quant.val == one(S) || error("Quantity value must be unity!")
         quantity(T,unit(quant))
     end
-    quantity{m,kg,s,A,K,mol,cd,rad,sr}(T::(@compat Union{Type,TypeVar}),unit::SIUnit{m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}
+    quantity{Tup}(T::(@compat Union{Type,TypeVar}),unit::SIUnit{Tup}) = SIQuantity{T,Tup}
 
-    tup{m,kg,s,A,K,mol,cd,rad,sr}(u::SIUnit{m,kg,s,A,K,mol,cd,rad,sr}) = (m,kg,s,A,K,mol,cd,rad,sr)
-    tup{T,m,kg,s,A,K,mol,cd,rad,sr}(u::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}) = (m,kg,s,A,K,mol,cd,rad,sr)
-    tup{T,m,kg,s,A,K,mol,cd,rad,sr}(u::SIRanges{T,m,kg,s,A,K,mol,cd,rad,sr}) = (m,kg,s,A,K,mol,cd,rad,sr)
+    tup{Tup}(u::SIUnit{Tup}) = (Tup)
+    tup{T,Tup}(u::SIQuantity{T,Tup}) = (Tup)
+    tup{T,Tup}(u::SIRanges{T,Tup}) = (Tup)
 
     macro quantity(expr,unit)
         esc(:(SIUnits.SIQuantity{$expr,SIUnits.tup($unit)...}))
     end
 
     # Irrationals propagate through units. Fancy!!
-    promote_rule{sym,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{Irrational{sym}},y::Type{SIUnit{m,kg,s,A,K,mol,cd,rad,sr}}) =
-        SIQuantity{Irrational{sym},m,kg,s,A,K,mol,cd,rad,sr}
-    promote_rule{sym,T,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{Irrational{sym}},y::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}) =
+    promote_rule{sym,Tup}(x::Type{Irrational{sym}},y::Type{SIUnit{Tup}}) =
+        SIQuantity{Irrational{sym},Tup}
+    promote_rule{sym,T,Tup}(x::Type{Irrational{sym}},y::Type{SIQuantity{T,Tup}}) =
         SIQuantity{promote_type(Irrational{sym},T)}
 
-    promote_rule{T,S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(
-        A::Type{SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}},B::Type{SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS}}) = SIQuantity{promote_type(T,S)}
-    promote_rule{T,mS,kgS,sS,AS,KS,molS,cdS,radS,srS,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(
-        A::Type{SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}},B::Type{SIUnit{mS,kgS,sS,AS,KS,molS,cdS,radS,srS}}) = SIQuantity{T}
-    promote_rule{S,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{Bool},y::Type{SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{promote_type(Bool,S)}
-    promote_rule{m,kg,s,A,K,mol,cd,rad,sr}(x::Type{Bool},y::Type{SIUnit{m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{Bool}
-    promote_rule{T<:Number,S,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{T},y::Type{SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{promote_type(T,S)}
-    promote_rule{T<:Number,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{T},y::Type{SIUnit{m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{T}
+    promote_rule{T,S,TupS,TupT}(A::Type{SIQuantity{T,TupT}},B::Type{SIQuantity{S,TupS}}) = SIQuantity{promote_type(T,S)}
+    promote_rule{T,TupS,TupT}(A::Type{SIQuantity{T,TupT}},B::Type{SIUnit{TupS}}) = SIQuantity{T}
+    promote_rule{S,Tup}(x::Type{Bool},y::Type{SIQuantity{S,Tup}}) = SIQuantity{promote_type(Bool,S)}
+    promote_rule{Tup}(x::Type{Bool},y::Type{SIUnit{Tup}}) = SIQuantity{Bool}
+    promote_rule{T<:Number,S,Tup}(x::Type{T},y::Type{SIQuantity{S,Tup}}) = SIQuantity{promote_type(T,S)}
+    promote_rule{T<:Number,Tup}(x::Type{T},y::Type{SIUnit{Tup}}) = SIQuantity{T}
 
     # One unspecified, units, one concrete (unspecified occurs as the promotion result from the rules above)
-    promote_rule{T,S,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{SIQuantity{T}},y::Type{SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{promote_type(T,S)}
+    promote_rule{T,S,Tup}(x::Type{SIQuantity{T}},y::Type{SIQuantity{S,Tup}}) = SIQuantity{promote_type(T,S)}
 
     # Unlike most other types, the promotion of two identitical SIQuantities is
     # not that type itself. As such, the promote_type behavior itself must be
     # overridden. C.f. https://github.com/Keno/SIUnits.jl/issues/27
-    promote_type{T,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}, ::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}) = SIQuantity{T}
+    promote_type{T,Tup}(::Type{SIQuantity{T,Tup}}, ::Type{SIQuantity{T,Tup}}) = SIQuantity{T}
 
     if VERSION >= v"0.4-dev"
         eval(quote
             convert{T}(::Type{SIQuantity{T}},x::Dates.Period) = error("Conversion from Period to SIQuantity not defined")
         end)
     end
-    convert{T<:Number,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T}},x::SIUnit{m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(one(T))
+    convert{T<:Number,Tup}(::Type{SIQuantity{T}},x::SIUnit{Tup}) = SIQuantity{T,Tup}(one(T))
     convert{T<:Number}(::Type{SIQuantity{T}},x::T) = UnitQuantity{T}(x)
     convert{T<:Number,S<:Number}(::Type{SIQuantity{T}},x::S) = convert(SIQuantity{T},convert(T,x))
     convert{T<:Number}(::Type{SIQuantity{T}},x::SIQuantity{T}) = x
-    convert{T<:Number,S,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T}},x::SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(convert(T,x.val))
+    convert{T<:Number,S,Tup}(::Type{SIQuantity{T}},x::SIQuantity{S,Tup}) = SIQuantity{T,Tup}(convert(T,x.val))
 
-    to_q{T,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}},val::T) = (0 == m == kg == s == A == K == mol == cd == rad == sr) ? val : SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(val)
-    convert{T,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}},val::Number) = (SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(convert(T,val)))
-    function convert{T,S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(::Type{SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}},val::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS})
-        if mS != mT || kgS != kgT || sS != sT || AS != AT || KS != KT || molS != molT || cdS != cdT || radS != radT || srS != srT
-            error("Dimension mismatch in convert. Attempted to convert a ($(repr(SIUnit{mS,kgS,sS,AS,KS,molS,cdS,radS,srS}))) to ($(repr(SIUnit{mT,kgT,sT,AT,KT,molT,cdT,radT,srT})))")
-        end
-        SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(convert(T,val.val))
+    to_q{T}(::Type{SIQuantity{T,EmptyTuple}},val::T) = val
+    to_q{T,Tup}(::Type{SIQuantity{T,Tup}},val::T) = SIQuantity{T,Tup}(val)
+    convert{T,Tup}(::Type{SIQuantity{T,Tup}},val::Number) = (SIQuantity{T,Tup}(convert(T,val)))
+
+    function convert{T,S,Tup}(::Type{SIQuantity{T,Tup}},val::SIQuantity{S,Tup})
+        SIQuantity{T,Tup}(convert(T,val.val))
     end
 
     for op in (:/,://)
@@ -171,60 +171,58 @@ module SIUnits
 
     inv(y::SIUnit) = tup2u(-tup(y))()
 
-    function +{T,S,m,kg,s,A,K,mol,cd,rad,sr}(
-        x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr},y::SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr})
+    function +{T,S,Tup}(
+        x::SIQuantity{T,Tup},y::SIQuantity{S,Tup})
         val = x.val+y.val
-        SIQuantity{typeof(val),m,kg,s,A,K,mol,cd,rad,sr}(val)
+        SIQuantity{typeof(val),Tup}(val)
     end
 
-    function -{T,S,m,kg,s,A,K,mol,cd,rad,sr}(
-        x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr},y::SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr})
+    function -{T,S,Tup}(
+        x::SIQuantity{T,Tup},y::SIQuantity{S,Tup})
         val = x.val-y.val
-        SIQuantity{typeof(val),m,kg,s,A,K,mol,cd,rad,sr}(val)
+        SIQuantity{typeof(val),Tup}(val)
     end
 
-    function -{T,S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(
-        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS})
+    function -{T,S,TupS,TupT}(x::SIQuantity{T,TupT},y::SIQuantity{S,TupS})
         error("Unit mismatch. Got ($(repr(unit(x)))) - ($(repr(unit(y))))")
     end
 
-    function +{T,S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(
-        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS})
+    function +{T,S,TupS,TupT}(
+        x::SIQuantity{T,TupT},y::SIQuantity{S,TupS})
         error("Unit mismatch. Got ($(repr(unit(x)))) + ($(repr(unit(y))))")
     end
 
-    function -{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
+    function -{T,Tup}(x::SIQuantity{T,Tup})
         val = -(x.val)
-        SIQuantity{typeof(val),m,kg,s,A,K,mol,cd,rad,sr}(val)
+        SIQuantity{typeof(val),Tup}(val)
     end
 
-    function ^{T,m,kg,s,A,K,mol,cd,rad,sr}(
-        x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr},i::Integer)
+    function ^{T,Tup}(
+        x::SIQuantity{T,Tup},i::Integer)
         if i == 0
             return one(T)
         end
         val = x.val^i
-        SIQuantity{typeof(val),m*i,kg*i,s*i,A*i,K*i,mol*i,cd*i,rad*i,sr*i}(val)
+        SIQuantity{typeof(val),Tup*i}(val)
     end
 
-    function ^{T,m,kg,s,A,K,mol,cd,rad,sr}(
-        x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr},r::Rational)
+    function ^{T,Tup}(
+        x::SIQuantity{T,Tup},r::Rational)
         if r == 0
             return one(T)
         end
         val = x.val^r
-        SIQuantity{typeof(val),convert(Int,m*r),convert(Int,kg*r),convert(Int,s*r),convert(Int,A*r),
-        convert(Int,K*r),convert(Int,mol*r),convert(Int,cd*r),convert(Int,rad*r),convert(Int,sr*r)}(val)
+        SIQuantity{typeof(val),Tup*r}(val)
     end
 
-    ^{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr},r::AbstractFloat) = x^rationalize(r)
+    ^{T,Tup}(x::SIQuantity{T,Tup},r::AbstractFloat) = x^rationalize(r)
 
-    function ^{T,S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(
-        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS})
+    function ^{T,S,TupS,TupT}(
+        x::SIQuantity{T,TupT},y::SIQuantity{S,TupS})
         error("Can not raise a number to a unitful quantity. Got ($(repr(unit(x))))^($(repr(unit(y))))")
     end
 
-    ^{T,S,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr},y::SIQuantity{S,0,0,0,0,0,0,0,0}) = x.val^(y.val)
+    ^{T,S,Tup}(x::SIQuantity{T,Tup},y::SIQuantity{S,EmptyTuple}) = x.val^(y.val)
 
     ==(x::SIQuantity,y::SIQuantity) = (tup(x) == tup(y)) && (x.val == y.val)
     =={T}(x::SIQuantity{T},y::SIUnit) = (tup(x) == tup(y)) && (x.val == one(T))
@@ -233,27 +231,26 @@ module SIUnits
 
     import Base: sqrt, abs, colon, isless, isfinite, isreal, real, imag, isnan
 
-    function colon{T,S,X,m,kg,s,A,K,mol,cd,rad,sr}(start::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr},step::SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr},stop::SIQuantity{X,m,kg,s,A,K,mol,cd,rad,sr})
+    function colon{T,S,X,Tup}(start::SIQuantity{T,Tup},step::SIQuantity{S,Tup},stop::SIQuantity{X,Tup})
         val = colon(start.val,step.val,stop.val)
-        SIRange{typeof(val),eltype(val),m,kg,s,A,K,mol,cd,rad,sr}(val)
+        SIRange{typeof(val),eltype(val),Tup}(val)
     end
 
-    function colon{T,S,m,kg,s,A,K,mol,cd,rad,sr}(start::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr},stop::SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr})
+    function colon{T,S,Tup}(start::SIQuantity{T,Tup},stop::SIQuantity{S,Tup})
         val = colon(start.val,stop.val)
-        SIRange{typeof(val),eltype(val),m,kg,s,A,K,mol,cd,rad,sr}(val)
+        SIRange{typeof(val),eltype(val),Tup}(val)
     end
 
-    function sqrt{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
+    function sqrt{T,Tup}(x::SIQuantity{T,Tup})
         val = sqrt(x.val)
-        SIQuantity{typeof(val),convert(Int,m/2),convert(Int,kg/2),convert(Int,s/2),convert(Int,A/2),
-        convert(Int,K/2),convert(Int,mol/2),convert(Int,cd/2),convert(Int,rad/2),convert(Int,rad/2)}(val)
+        SIQuantity{typeof(val),Tup/2}(val)
     end
 
-    function abs{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
-        SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(abs(x.val))
+    function abs{T,Tup}(x::SIQuantity{T,Tup})
+        SIQuantity{T,Tup}(abs(x.val))
     end
 
-    function isfinite{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
+    function isfinite{T,Tup}(x::SIQuantity{T,Tup})
         isfinite(x.val)
     end
 
@@ -262,36 +259,35 @@ module SIUnits
     real(x::SIQuantity) = typeof(x)(real(x.val))
     imag(x::SIQuantity) = typeof(x)(imag(x.val))
 
-    function isless{T}(x::SIQuantity{T,0,0,0,0,0,0,0,0,0}, y::SIQuantity{T,0,0,0,0,0,0,0,0,0})
+    function isless{T}(x::SIQuantity{T,EmptyTuple}, y::SIQuantity{T,EmptyTuple})
         return isless(x.val,y.val)
     end
-    function isless{T,S}(x::SIQuantity{T,0,0,0,0,0,0,0,0,0}, y::SIQuantity{S,0,0,0,0,0,0,0,0,0})
+    function isless{T,S}(x::SIQuantity{T,EmptyTuple}, y::SIQuantity{S,EmptyTuple})
         return isless(x.val,y.val)
     end
-    function isless{T}(x::SIQuantity{T,0,0,0,0,0,0,0,0,0}, y::Real)
+    function isless{T}(x::SIQuantity{T,EmptyTuple}, y::Real)
         return isless(x.val,y)
     end
-    function isless{T}(x::Real, y::SIQuantity{T,0,0,0,0,0,0,0,0,0})
+    function isless{T}(x::Real, y::SIQuantity{T,EmptyTuple})
         return isless(x,y.val)
     end
-    function isless{T,S,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(
-        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT},y::SIQuantity{S,mT,kgT,sT,AT,KT,molT,cdT,radT,srT})
+    function isless{T,S,TupT}(x::SIQuantity{T,TupT},y::SIQuantity{S,TupT})
         return isless(x.val,y.val)
     end
 
-    function mod{T,S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS,mT,kgT,sT,AT,KT,molT,cdT,radT,srT}(
-        x::SIQuantity{T,mT,kgT,sT,AT,KT,molT,cdT,radT,srT},y::SIQuantity{S,mS,kgS,sS,AS,KS,molS,cdS,radS,srS})
+    function mod{T,S,TupS,TupT}(
+        x::SIQuantity{T,TupT},y::SIQuantity{S,TupS})
         error("Unit mismatch. Got mod($(repr(unit(x))),$(repr(unit(y))))")
     end
 
-    function mod{T,S,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr},y::SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr})
+    function mod{T,S,Tup}(x::SIQuantity{T,Tup},y::SIQuantity{S,Tup})
         val = mod(x.val,y.val)
-        SIQuantity{typeof(val),m,kg,s,A,K,mol,cd,rad,sr}(val)
+        SIQuantity{typeof(val),Tup}(val)
     end
 
     import Base: sin, cos, tan, cot, sec, csc
     for func in (:sin,:cos,:tan,:cot,:sec,:csc)
-        @eval $func{T}(θ::SIQuantity{T,0,0,0,0,0,0,0,1,0}) = $func(θ.val)
+        @eval $func{T}(θ::SIQuantity{T,(0,0,0,0,0,0,0,1,0)}) = $func(θ.val)
     end
 
     # Forwarding methods that do not affect units
@@ -312,27 +308,26 @@ module SIUnits
     end
 
 
-    function ^{m,kg,s,A,K,mol,cd,rad,sr}(
-        x::SIUnit{m,kg,s,A,K,mol,cd,rad,sr},i::Integer)
-        SIUnit{m*i,kg*i,s*i,A*i,K*i,mol*i,cd*i,rad*i,sr*i}()
+    function ^{Tup}(x::SIUnit{Tup},i::Integer)
+        SIUnit{i*Tup}()
     end
 
-    unit{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}) = SIUnit{m,kg,s,A,K,mol,cd,rad,sr}()
+    unit{T,Tup}(x::SIQuantity{T,Tup}) = SIUnit{Tup}()
 
     export SIPrefix, Meter, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Radian, Steradian, Kilo, Mega, Giga,
         Tera, Peta, Exa, Zetta, Centi, Milli, Micro, Nano, Pico, Femto, Atto, Zepto, Yocto,
         Gram, Joule, Coulomb, Volt, Farad, Newton, Ohm, CentiMeter, Siemens, Hertz, Watt, Pascal
 
-    const SIPrefix  = SIUnit{0,0,0,0,0,0,0,0,0}()
-    const Meter     = SIUnit{1,0,0,0,0,0,0,0,0}()
-    const KiloGram  = SIUnit{0,1,0,0,0,0,0,0,0}()
-    const Second    = SIUnit{0,0,1,0,0,0,0,0,0}()
-    const Ampere    = SIUnit{0,0,0,1,0,0,0,0,0}()
-    const Kelvin    = SIUnit{0,0,0,0,1,0,0,0,0}()
-    const Mole      = SIUnit{0,0,0,0,0,1,0,0,0}()
-    const Candela   = SIUnit{0,0,0,0,0,0,1,0,0}()
-    const Radian    = SIUnit{0,0,0,0,0,0,0,1,0}()
-    const Steradian = SIUnit{0,0,0,0,0,0,0,0,1}()
+    const SIPrefix  = SIUnit{(0,0,0,0,0,0,0,0,0)}()
+    const KiloGram  = SIUnit{(1,0,0,0,0,0,0,0,0)}()
+    const Meter     = SIUnit{(0,1,0,0,0,0,0,0,0)}()
+    const Second    = SIUnit{(0,0,1,0,0,0,0,0,0)}()
+    const Ampere    = SIUnit{(0,0,0,1,0,0,0,0,0)}()
+    const Kelvin    = SIUnit{(0,0,0,0,1,0,0,0,0)}()
+    const Mole      = SIUnit{(0,0,0,0,0,1,0,0,0)}()
+    const Candela   = SIUnit{(0,0,0,0,0,0,1,0,0)}()
+    const Radian    = SIUnit{(0,0,0,0,0,0,0,1,0)}()
+    const Steradian = SIUnit{(0,0,0,0,0,0,0,0,1)}()
 
     const Kilo       = (1000)SIPrefix
     const Mega       = (10^6)SIPrefix
@@ -367,7 +362,7 @@ module SIUnits
     const CentiMeter = Centi*Meter
 
 
-# Pretty Printing - Text
+    # Pretty Printing - Text
     superscript(i) = map(repr(i)) do c
         c   ==  '-' ? '\u207b' :
         c   ==  '1' ? '\u00b9' :
@@ -383,35 +378,34 @@ module SIUnits
         error("Unexpected Chatacter")
     end
 
-    function spacing(idx::Int, x::SIUnit)
+    function spacing(idx::Int, x::UnitTuple)
         # Only print a space if there are nonzero units coming after this one
-        tup(x)[idx+1:end] == ntuple((i)->0, 9-idx) ? "" : " "
+        x[idx+1:end] == ntuple((i)->0, 9-idx) ? "" : " "
     end
-    function show{m,kg,s,A,K,mol,cd,rad,sr}(io::IO,x::SIUnit{m,kg,s,A,K,mol,cd,rad,sr})
-        kg  != 0 && print(io, "kg",  (kg  == 1 ? spacing(1,x) : superscript(kg)))
-        m   != 0 && print(io, "m",   (m   == 1 ? spacing(2,x) : superscript(m)))
-        s   != 0 && print(io, "s",   (s   == 1 ? spacing(3,x) : superscript(s)))
-        A   != 0 && print(io, "A",   (A   == 1 ? spacing(4,x) : superscript(A)))
-        K   != 0 && print(io, "K",   (K   == 1 ? spacing(5,x) : superscript(K)))
-        mol != 0 && print(io, "mol", (mol == 1 ? spacing(6,x) : superscript(mol)))
-        cd  != 0 && print(io, "cd",  (cd  == 1 ? spacing(7,x) : superscript(cd)))
-        rad != 0 && print(io, "rad", (rad == 1 ? spacing(8,x) : superscript(rad)))
-        sr  != 0 && print(io, "sr",  (sr  == 1 ? ""           : superscript(sr)))
+    const UnitNames = (:kg,:m,:s,:A,:K,:mol,:can,:rad,:sr)
+    function show{Tup}(io::IO,x::SIUnit{Tup})
+        for (i,v) in enumerate(Tup)
+            if i < 9
+                v  != 0 && print(io, UnitNames[i],  (v  == 1 ? spacing(1,Tup) : superscript(v)))
+            else
+                v  != 0 && print(io, UnitNames[i],  (v  == 1 ? "" : superscript(v)))
+            end
+        end
         nothing
     end
 
-    function show{T,m,kg,s,A,K,mol,cd,rad,sr}(io::IO,x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
+    function show{T,Tup}(io::IO,x::SIQuantity{T,Tup})
         show(io,x.val)
         print(io," ")
         show(io,unit(x))
     end
 
-    function sidims{m,kg,s,A,K,mol,cd,rad,sr}(::SIUnit{m,kg,s,A,K,mol,cd,rad,sr})
-        (m,kg,s,A,K,mol,cd,rad,sr)
+    function sidims{Tup}(::SIUnit{Tup})
+        (Tup)
     end
 
-    function sidims{T,m,kg,s,A,K,mol,cd,rad,sr}(::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
-        (m,kg,s,A,K,mol,cd,rad,sr)
+    function sidims{T,Tup}(::SIQuantity{T,Tup})
+        (Tup)
     end
 
     export @prettyshow
@@ -438,9 +432,10 @@ module SIUnits
         end)
     end
 
-    function Base.Multimedia.writemime{m,kg,s,A,K,mol,cd,rad,sr}(io::IO,::MIME"text/mathtex+latex",x::SIUnit{m,kg,s,A,K,mol,cd,rad,sr})
+    function Base.Multimedia.writemime{Tup}(io::IO,::MIME"text/mathtex+latex",x::SIUnit{Tup})
         num = ASCIIString[]
         den = ASCIIString[]
+        kg,m,s,A,K,mol,cd,rad,sr = Tup
         @l kg
         @l m
         @l s
@@ -461,7 +456,7 @@ module SIUnits
         end
     end
 
-    function Base.Multimedia.writemime{T,m,kg,s,A,K,mol,cd,rad,sr}(io::IO,::MIME"text/mathtex+latex",x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
+    function Base.Multimedia.writemime{T,Tup}(io::IO,::MIME"text/mathtex+latex",x::SIQuantity{T,Tup})
         writemime(io,MIME("text/mathtex+latex"),x.val)
         write(io,"\\;")
         Base.Multimedia.writemime(io,MIME("text/mathtex+latex"),unit(x))
@@ -489,9 +484,9 @@ promote_rule{T<:Number,S<:Number,U}(x::Type{T},y::Type{NonSIQuantity{S,U}}) = No
 promote_rule{T<:Number}(x::Type{T},U::Type{NonSIUnit}) = NonSIQuantity{T,U}
 
 # Interaction between SI and non-SI quantities
-promote_rule{S<:Number,T<:Number,U,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{NonSIQuantity{S,U}},y::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}) =
+promote_rule{S<:Number,T<:Number,U,Tup}(x::Type{NonSIQuantity{S,U}},y::Type{SIQuantity{T,Tup}}) =
     SIQuantity{promote_type(S,T)}
-promote_rule{S<:Number,T<:Number,U,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}},y::Type{NonSIQuantity{S,U}}) =
+promote_rule{S<:Number,T<:Number,U,Tup}(x::Type{SIQuantity{T,Tup}},y::Type{NonSIQuantity{S,U}}) =
     SIQuantity{promote_type(S,T)}
 
 siquantity{B}(T,U::NonSIUnit{B}) = quantity(T,B())
