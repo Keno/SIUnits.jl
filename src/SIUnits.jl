@@ -364,7 +364,7 @@ module SIUnits
 
 
     # Pretty Printing - Text
-    typealias NameValuePair Tuple{Symbol,Int64}
+    typealias NameValuePair @compat Tuple{Symbol,Int64}
     char_superscript(::Type{Val{'-'}}) = '\u207b'
     char_superscript(::Type{Val{'1'}}) = '\u00b9'
     char_superscript(::Type{Val{'2'}}) = '\u00b2'
