@@ -11,14 +11,14 @@ module SIUnits
     const EmptyTuple = (0,0,0,0,0,0,0,0,0)
 
     #Basic UnitTuple Operations
-    +(xs::UnitTuple,ys::UnitTuple) = ([x+y for (x,y) in zip(xs,ys)]...)
-    -(xs::UnitTuple,ys::UnitTuple) = ([x-y for (x,y) in zip(xs,ys)]...)
-    -(xs::UnitTuple) = ([-x for x in xs]...)
-    *(x::Integer,ys::UnitTuple) = ([x*y for y in ys]...)
-    *(xs::UnitTuple,y::Integer) = ([x*y for x in xs]...)
-    *{I<:Integer}(x::Rational{I},ys::UnitTuple) = ([convert(Int64,x*y) for y in ys]...)
-    *{I<:Integer}(xs::UnitTuple,y::Rational{I}) = ([convert(Int64,x*y) for x in xs]...)
-    /(xs::UnitTuple,y::Integer) = ([convert(Int64,x/y) for x in xs]...)
+    +(xs::UnitTuple,ys::UnitTuple) = tuple([x+y for (x,y) in zip(xs,ys)]...)
+    -(xs::UnitTuple,ys::UnitTuple) = tuple([x-y for (x,y) in zip(xs,ys)]...)
+    -(xs::UnitTuple) = tuple([-x for x in xs]...)
+    *(x::Integer,ys::UnitTuple) = tuple([x*y for y in ys]...)
+    *(xs::UnitTuple,y::Integer) = tuple([x*y for x in xs]...)
+    *{I<:Integer}(x::Rational{I},ys::UnitTuple) = tuple([convert(Int64,x*y) for y in ys]...)
+    *{I<:Integer}(xs::UnitTuple,y::Rational{I}) = tuple([convert(Int64,x*y) for x in xs]...)
+    /(xs::UnitTuple,y::Integer) = tuple([convert(Int64,x/y) for x in xs]...)
 
     immutable SIQuantity{T<:Number,Tup} <: Number
         val::T
