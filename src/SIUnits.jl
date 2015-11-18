@@ -318,10 +318,9 @@ module SIUnits
         Tera, Peta, Exa, Zetta, Centi, Milli, Micro, Nano, Pico, Femto, Atto, Zepto, Yocto,
         Gram, Joule, Coulomb, Volt, Farad, Newton, Ohm, CentiMeter, Siemens, Hertz, Watt, Pascal
 
-    const UnitNames = (:kg,:m,:s,:A,:K,:mol,:can,:rad,:sr)
     const SIPrefix  = SIUnit{(0,0,0,0,0,0,0,0,0)}()
-    const Meter     = SIUnit{(1,0,0,0,0,0,0,0,0)}()
-    const KiloGram  = SIUnit{(0,1,0,0,0,0,0,0,0)}()
+    const KiloGram  = SIUnit{(1,0,0,0,0,0,0,0,0)}()
+    const Meter     = SIUnit{(0,1,0,0,0,0,0,0,0)}()
     const Second    = SIUnit{(0,0,1,0,0,0,0,0,0)}()
     const Ampere    = SIUnit{(0,0,0,1,0,0,0,0,0)}()
     const Kelvin    = SIUnit{(0,0,0,0,1,0,0,0,0)}()
@@ -364,37 +363,41 @@ module SIUnits
 
 
     # Pretty Printing - Text
-    typealias NameValuePair @compat Tuple{Symbol,Int64}
-    char_superscript(::Type{Val{'-'}}) = '\u207b'
-    char_superscript(::Type{Val{'1'}}) = '\u00b9'
-    char_superscript(::Type{Val{'2'}}) = '\u00b2'
-    char_superscript(::Type{Val{'3'}}) = '\u00b3'
-    char_superscript(::Type{Val{'4'}}) = '\u2074'
-    char_superscript(::Type{Val{'5'}}) = '\u2075'
-    char_superscript(::Type{Val{'6'}}) = '\u2076'
-    char_superscript(::Type{Val{'7'}}) = '\u2077'
-    char_superscript(::Type{Val{'8'}}) = '\u2078'
-    char_superscript(::Type{Val{'9'}}) = '\u2079'
-    char_superscript(::Type{Val{'0'}}) = '\u2070'
-    superscript(x::Int64) = map(repr(x)) do c
-        char_superscript(Val{c})
+    superscript(i) = map(repr(i)) do c
+        c   ==  '-' ? '\u207b' :
+        c   ==  '1' ? '\u00b9' :
+        c   ==  '2' ? '\u00b2' :
+        c   ==  '3' ? '\u00b3' :
+        c   ==  '4' ? '\u2074' :
+        c   ==  '5' ? '\u2075' :
+        c   ==  '6' ? '\u2076' :
+        c   ==  '7' ? '\u2077' :
+        c   ==  '8' ? '\u2078' :
+        c   ==  '9' ? '\u2079' :
+        c   ==  '0' ? '\u2070' :
+        error("Unexpected Chatacter")
     end
 
-    is_nonzero_value(p::NameValuePair) = p[2] != 0
-    function show(io::IO,p::NameValuePair)
-        print(io,p[1])
-        if p[2] != 1
-            print(io,superscript(p[2]))
+    function spacing(idx::Int, x::UnitTuple)
+        # Only print a space if there are nonzero units coming after this one
+        x[idx+1:end] == ntuple((i)->0, 9-idx) ? "" : " "
+    end
+    const UnitNames = (:kg,:m,:s,:A,:K,:mol,:can,:rad,:sr)
+    function show{Tup}(io::IO,x::SIUnit{Tup})
+        for (i,v) in enumerate(Tup)
+            if i < 9
+                v  != 0 && print(io, UnitNames[i],  (v  == 1 ? spacing(1,Tup) : superscript(v)))
+            else
+                v  != 0 && print(io, UnitNames[i],  (v  == 1 ? "" : superscript(v)))
+            end
         end
-    end
-
-    function show{Tup}(io::IO,::SIUnit{Tup})
-        filtered_pairs = filter(is_nonzero_value,zip(UnitNames,Tup))
-        print(io,join(map(string,filtered_pairs),""))
+        nothing
     end
 
     function show{T,Tup}(io::IO,x::SIQuantity{T,Tup})
-        print(io,x.val," ",unit(x))
+        show(io,x.val)
+        print(io," ")
+        show(io,unit(x))
     end
 
     function sidims{Tup}(::SIUnit{Tup})
