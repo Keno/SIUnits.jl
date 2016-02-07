@@ -297,10 +297,11 @@ module SIUnits
     # Forwarding methods that do not affect units
     import Base: conj
     conj(x::SIQuantity) = typeof(x)(conj(x.val))
-
+    # remove when they are fully deprecated in 0.5 as the convert bellow covers all cases. As constructers call convert as fallback
     float64(x::SIQuantity) = float64(x.val)
     float(x::SIQuantity) = float(x.val)
     int(x::SIQuantity) = int(x.val)
+    convert{T1<:@compat(Union{Integer, AbstractFloat}), T<:Number,m,kg,s,A,K,mol,cd,rad,sr}(::Type{T1},x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}) = convert(T1, x.val)
 
     *(x::SIUnit,y::SIUnit) = tup2u(tup(x)+tup(y))()
     *{T}(x::SIUnit,y::SIQuantity{T}) = to_q(quantity(T,tup(y)+tup(x)),y.val)
