@@ -380,7 +380,8 @@ module SIUnits
         c   ==  '8' ? '\u2078' :
         c   ==  '9' ? '\u2079' :
         c   ==  '0' ? '\u2070' :
-        error("Unexpected Chatacter")
+        c   ==  '.' ? '\uff65' :
+        throw(DomainError("Unexpected character: $c"))
     end
 
     function spacing(idx::Int, x::SIUnit)
