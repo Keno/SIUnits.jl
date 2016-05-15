@@ -2,7 +2,7 @@ isdefined(Base, :__precompile__) && __precompile__()
 
 module SIUnits
 
-    using Compat
+    using Compat; import Compat.String
 
     import Base: ==, +, -, *, /, .+, .-, .*, ./, //, ^
     import Base: promote_rule, promote_type, convert, show, mod
@@ -439,8 +439,8 @@ module SIUnits
     end
 
     function Base.Multimedia.writemime{m,kg,s,A,K,mol,cd,rad,sr}(io::IO,::MIME"text/mathtex+latex",x::SIUnit{m,kg,s,A,K,mol,cd,rad,sr})
-        num = ASCIIString[]
-        den = ASCIIString[]
+        num = String[]
+        den = String[]
         @l kg
         @l m
         @l s
