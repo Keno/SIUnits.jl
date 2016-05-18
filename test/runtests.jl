@@ -172,3 +172,11 @@ for func in (sin,cos,tan,cot,sec,csc)
     @test func(1.23rad) == func(1.23)
     @test_approx_eq func(1.23deg) func(as(1.23deg,rad))
 end
+
+if VERSION > v"0.4.0"
+    var = 5*V
+    for f in [Float32, Float64, Int64, Int32, UInt32, BigFloat]
+        @test f(var) == f(var.val)
+    end
+        
+end
