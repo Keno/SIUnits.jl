@@ -34,7 +34,7 @@ module SIUnits
     unit{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIRanges{T,m,kg,s,A,K,mol,cd,rad,sr}) = SIUnit{m,kg,s,A,K,mol,cd,rad,sr}()
     quantity{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIRanges{T,m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}
 
-    import Base: length, getindex, next, float64, float, int, show, start, step, last, done, first, eltype, one, zero
+    import Base: length, getindex, next, float, show, start, step, last, done, first, eltype, one, zero
 
     one(x::SIQuantity) = one(x.val)
     one{T,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}) = one(T)
@@ -298,9 +298,14 @@ module SIUnits
     import Base: conj
     conj(x::SIQuantity) = typeof(x)(conj(x.val))
 
-    float64(x::SIQuantity) = float64(x.val)
     float(x::SIQuantity) = float(x.val)
-    int(x::SIQuantity) = int(x.val)
+    if VERSION >= v"0.4.0"
+        Base.Float64(x::SIQuantity) = Float64(x.val)
+        Base.Int(x::SIQuantity) = Int(x.val)
+    else
+        Base.float64(x::SIQuantity) = float64(x.val)
+        Base.int(x::SIQuantity) = int(x.val)
+    end
 
     *(x::SIUnit,y::SIUnit) = tup2u(tup(x)+tup(y))()
     *{T}(x::SIUnit,y::SIQuantity{T}) = to_q(quantity(T,tup(y)+tup(x)),y.val)
@@ -420,8 +425,8 @@ module SIUnits
         esc(quote function Base.show(io::IO,::SIUnits.SIUnit{SIUnits.sidims($(unit))...})
             print(io,$(string))
         end
-        function Base.Multimedia.writemime(io::IO,::MIME"text/mathtex+latex",::SIUnits.SIUnit{SIUnits.sidims($(unit))...})
-            Base.Multimedia.writemime(io,MIME("text/mathtex+latex"),$(string))
+        @compat function Base.show(io::IO,::MIME"text/mathtex+latex",::SIUnits.SIUnit{SIUnits.sidims($(unit))...})
+            show(io,MIME("text/mathtex+latex"),$(string))
         end
         end)
     end
@@ -430,7 +435,7 @@ module SIUnits
 
     using TexExtensions
 
-    import Base: writemime
+    @compat import Base: show
 
     macro l(x)
         esc(quote
@@ -438,7 +443,7 @@ module SIUnits
         end)
     end
 
-    function Base.Multimedia.writemime{m,kg,s,A,K,mol,cd,rad,sr}(io::IO,::MIME"text/mathtex+latex",x::SIUnit{m,kg,s,A,K,mol,cd,rad,sr})
+    @compat function show{m,kg,s,A,K,mol,cd,rad,sr}(io::IO,::MIME"text/mathtex+latex",x::SIUnit{m,kg,s,A,K,mol,cd,rad,sr})
         num = String[]
         den = String[]
         @l kg
@@ -461,10 +466,10 @@ module SIUnits
         end
     end
 
-    function Base.Multimedia.writemime{T,m,kg,s,A,K,mol,cd,rad,sr}(io::IO,::MIME"text/mathtex+latex",x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
-        writemime(io,MIME("text/mathtex+latex"),x.val)
+    @compat function show{T,m,kg,s,A,K,mol,cd,rad,sr}(io::IO,::MIME"text/mathtex+latex",x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
+        show(io,MIME("text/mathtex+latex"),x.val)
         write(io,"\\;")
-        Base.Multimedia.writemime(io,MIME("text/mathtex+latex"),unit(x))
+        show(io,MIME("text/mathtex+latex"),unit(x))
     end
 
 # Non-SI Units
@@ -524,14 +529,14 @@ function show(io::IO,x::NonSIQuantity)
     show(io,unit(x))
 end
 
-function Base.Multimedia.writemime{BaseUnit,Unit}(io::IO,::MIME"text/mathtex+latex",x::NonSIUnit{BaseUnit,Unit})
+@compat function show{BaseUnit,Unit}(io::IO,::MIME"text/mathtex+latex",x::NonSIUnit{BaseUnit,Unit})
     write(io,"\\text{",string(Unit),"}")
 end
 
-function Base.Multimedia.writemime(io::IO,::MIME"text/mathtex+latex",x::NonSIQuantity)
-    writemime(io,MIME("text/mathtex+latex"),x.val)
+@compat function show(io::IO,::MIME"text/mathtex+latex",x::NonSIQuantity)
+    show(io,MIME("text/mathtex+latex"),x.val)
     write(io,"\\;")
-    Base.Multimedia.writemime(io,MIME("text/mathtex+latex"),unit(x))
+    show(io,MIME("text/mathtex+latex"),unit(x))
 end
 
 # No, these two are not the same. Sometimes we get SIQuantities that are not specialized

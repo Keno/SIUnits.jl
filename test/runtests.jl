@@ -35,9 +35,9 @@ end
 @test 1V * one(1V) == 1V
 @test 1V * one(typeof(1V)) == 1V
 @test 3V / 3V == one(3)
-@test 3.V / 3.V === one(3.)
-@test isa(3.V / 3.V, typeof(one(3.)))
-@test isa(one(3.V), typeof(one(3.)))
+@test 3.0V / 3.0V === one(3.)
+@test isa(3.0V / 3.0V, typeof(one(3.)))
+@test isa(one(3.0V), typeof(one(3.)))
 
 OneNewton = 1*(kg*m/s^2)
 @test OneNewton*(1s)^2 == 1kg*m
