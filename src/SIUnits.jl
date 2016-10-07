@@ -34,7 +34,7 @@ module SIUnits
     unit{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIRanges{T,m,kg,s,A,K,mol,cd,rad,sr}) = SIUnit{m,kg,s,A,K,mol,cd,rad,sr}()
     quantity{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIRanges{T,m,kg,s,A,K,mol,cd,rad,sr}) = SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}
 
-    import Base: length, getindex, next, float, show, start, step, last, done, first, eltype, one, zero
+    import Base: length, getindex, unsafe_getindex, next, float, show, start, step, last, done, first, eltype, one, zero
 
     one(x::SIQuantity) = one(x.val)
     one{T,m,kg,s,A,K,mol,cd,rad,sr}(::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}}) = one(T)
@@ -53,6 +53,8 @@ module SIUnits
     show{T<:UnitRange}(io::IO, r::SIRange{T}) = print(io, first(r),':',last(r))
     getindex(r::SIRanges,i::Integer) = (quantity(r)(getindex(r.val,i)))
     getindex{T<:SIRanges}(r::T,i::Range) = T(getindex(r.val,i))
+    unsafe_getindex(r::SIRanges,i::Integer) = (quantity(r)(unsafe_getindex(r.val,i)))
+    unsafe_getindex{T<:SIRanges}(r::T,i::Range) = T(unsafe_getindex(r.val,i))
     function next(r::SIRanges, i)
         v, j = next(r.val,i)
         to_q(quantity(r),v), j
