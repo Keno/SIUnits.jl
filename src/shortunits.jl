@@ -5,7 +5,8 @@
 module ShortUnits
     export µg, mg, g, kg, µm, mm, cm, m, km, mJ, J, MJ, HJ, fF, pF, nF, µF, mF,
         F, pΩ, nΩ, µΩ, mΩ, Ω, kΩ, MΩ, mV, V, MV, mHz, Hz, kHz, MHz, GHz, THz, fA, pA,
-        nA, µA, mA, A, C, N, mol, ns, ms, µs, s, S, nW, µW, mW, W, kW, MW, GW, eV,
+        nA, µA, mA, A, C, N, mol, mM, μM, µM, nM, pM, mmol, μmol, µmol, nmol, pmol,
+        ns, ms, µs, s, S, nW, µW, mW, W, kW, MW, GW, eV,
         K, mPa, Pa, kPa, MPa, GPa, nm, torr, mtorr, atm, rad, deg, sr,
         MeV, GeV, TeV
 
@@ -87,6 +88,14 @@ module ShortUnits
     const GW    = Giga*Watt
 
     const mol   = Mole
+    const mM    = Milli*Mole
+    const µM    = Micro*Mole
+    const nM    = Nano*Mole
+    const pM    = Pico*Mole
+    const mmol    = Milli*Mole
+    const µmol    = Micro*Mole
+    const nmol    = Nano*Mole
+    const pmol    = Pico*Mole
 
     const K     = Kelvin
 
@@ -112,5 +121,7 @@ module ShortUnits
     const μF = µF
     const μA = µA
     const μW = µW
+    const μM = µM
+    const μmol = µmol
 
 end
