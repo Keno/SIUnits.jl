@@ -387,7 +387,7 @@ module SIUnits
         c   ==  '8' ? '\u2078' :
         c   ==  '9' ? '\u2079' :
         c   ==  '0' ? '\u2070' :
-        error("Unexpected Chatacter")
+        error("Unexpected Character")
     end
 
     function spacing(idx::Int, x::SIUnit)
