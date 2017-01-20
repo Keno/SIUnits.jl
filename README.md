@@ -23,6 +23,10 @@ Note that all examples in this README assume that the second form was
 used. To make the examples work with the first form, just substitute the
 written out names, e.g. `Volt` for `V` and `Nano*Meter` for `nm`.
 
+# Alternatives
+
+[Unitful.jl](https://github.com/ajkeller34/Unitful.jl) provides similar functionality and was written more recently, allowing it to take advantage of modern features of julia.
+
 # Usage
 
 `SIUnits.jl` integrates into the number promotion system and all the usual
