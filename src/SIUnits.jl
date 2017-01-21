@@ -255,6 +255,10 @@ module SIUnits
         SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(abs(x.val))
     end
 
+    max{ND,N,m,kg,s,A,K,mol,cd,rad,sr}(x::Array{SIUnits.SIQuantity{N,m,kg,s,A,K,mol,cd,rad,sr},ND},
+        y::Array{SIUnits.SIQuantity{N,m,kg,s,A,K,mol,cd,rad,sr},ND}) = 
+        map((x_tmp,y_tmp)->SIUnits.SIQuantity{N,m,kg,s,A,K,mol,cd,rad,sr}(max(x_tmp.val,y_tmp.val)),x,y)
+
     function isfinite{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
         isfinite(x.val)
     end
