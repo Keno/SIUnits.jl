@@ -172,3 +172,7 @@ for func in (sin,cos,tan,cot,sec,csc)
     @test func(1.23rad) == func(1.23)
     @test_approx_eq func(1.23deg) func(as(1.23deg,rad))
 end
+
+# Test printing and superscript()
+@test repr(SIUnits.SIQuantity{Float64,zeros(8)...,0.4}(1.0)) == "1.0 sr⁰･⁴"
+
