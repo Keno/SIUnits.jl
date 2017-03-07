@@ -326,12 +326,13 @@ module SIUnits
 
     unit{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}) = SIUnit{m,kg,s,A,K,mol,cd,rad,sr}()
 
-    export SIPrefix, Meter, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Radian, Steradian, Kilo, Mega, Giga,
+    export SIPrefix, Meter, Metre, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Radian, Steradian, Kilo, Mega, Giga,
         Tera, Peta, Exa, Zetta, Centi, Milli, Micro, Nano, Pico, Femto, Atto, Zepto, Yocto,
         Gram, Joule, Coulomb, Volt, Farad, Newton, Ohm, CentiMeter, Siemens, Hertz, Watt, Pascal
 
     const SIPrefix  = SIUnit{0,0,0,0,0,0,0,0,0}()
     const Meter     = SIUnit{1,0,0,0,0,0,0,0,0}()
+    const Metre     = Meter
     const KiloGram  = SIUnit{0,1,0,0,0,0,0,0,0}()
     const Second    = SIUnit{0,0,1,0,0,0,0,0,0}()
     const Ampere    = SIUnit{0,0,0,1,0,0,0,0,0}()
