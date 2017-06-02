@@ -233,7 +233,7 @@ module SIUnits
     =={T}(x::SIUnit,y::SIQuantity{T}) = (tup(x) == tup(y)) && (one(T) == y.val)
     ==(x::SIUnit,y::SIUnit) = tup(x) == tup(y)
 
-    import Base: sqrt, abs, colon, isless, isfinite, isreal, real, imag, isnan
+    import Base: sqrt, abs, abs2, colon, isless, isfinite, isreal, real, imag, isnan
 
     function colon{T,S,X,m,kg,s,A,K,mol,cd,rad,sr}(start::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr},step::SIQuantity{S,m,kg,s,A,K,mol,cd,rad,sr},stop::SIQuantity{X,m,kg,s,A,K,mol,cd,rad,sr})
         val = colon(start.val,step.val,stop.val)
@@ -253,6 +253,11 @@ module SIUnits
 
     function abs{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
         SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}(abs(x.val))
+    end
+
+    function abs2{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
+        val = abs2(x.val)
+        SIQuantity{typeof(val),2*m,2*kg,2*s,2*A,2*K,2*mol,2*cd,2*rad,2*sr}(val)
     end
 
     function isfinite{T,m,kg,s,A,K,mol,cd,rad,sr}(x::SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr})
