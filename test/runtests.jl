@@ -172,3 +172,7 @@ for func in (sin,cos,tan,cot,sec,csc)
     @test func(1.23rad) == func(1.23)
     @test_approx_eq func(1.23deg) func(as(1.23deg,rad))
 end
+
+# Absolute value
+@test abs(-1Volt) == 1Volt
+@test abs2(-2Volt) == 4(Volt^2)
