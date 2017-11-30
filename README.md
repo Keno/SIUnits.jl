@@ -1,3 +1,7 @@
+# This package may be unsupported
+
+We recommend [Unitful.jl](https://github.com/ajkeller34/Unitful.jl), which provides greater functionality and was written more recently, allowing it to take advantage of modern features of julia.
+
 # SIUnits
 
 [![Build Status](https://travis-ci.org/Keno/SIUnits.jl.svg?branch=master)](https://travis-ci.org/Keno/SIUnits.jl)
@@ -22,10 +26,6 @@ by default to avoid flooding the namespace where this is not desired.
 Note that all examples in this README assume that the second form was
 used. To make the examples work with the first form, just substitute the
 written out names, e.g. `Volt` for `V` and `Nano*Meter` for `nm`.
-
-# Alternatives
-
-[Unitful.jl](https://github.com/ajkeller34/Unitful.jl) provides similar functionality and was written more recently, allowing it to take advantage of modern features of julia.
 
 # Usage
 
