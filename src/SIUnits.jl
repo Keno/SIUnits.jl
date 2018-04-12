@@ -375,6 +375,7 @@ module SIUnits
     const Siemens    = inv(Ohm)
     const Watt       = Joule/Second
     const Pascal     = Newton/Meter^2
+    const Tesla      = KiloGram/Second^2/Ampere
 
     const CentiMeter = Centi*Meter
 
