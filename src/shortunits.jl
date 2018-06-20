@@ -106,11 +106,13 @@ module ShortUnits
 
     # Support the other unicode codepoint for $\mu$
     # (namely the one we get on the REPL)
-    export μg, μm, μF, μA, μW
+    export μg, μm, μF, μA, μW, μs, μΩ
     const μg = µg
     const μm = µm
     const μF = µF
     const μA = µA
     const μW = µW
+    const μs = µs
+    const μΩ = µΩ
 
 end
